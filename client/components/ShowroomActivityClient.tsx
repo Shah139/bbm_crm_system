@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Activity, TrendingUp, Users, Clock } from 'lucide-react';
-import Toast from '@/components/Toast';
+import Toast from "@/components/Toast"
 
 interface ShowroomActivity {
   id: number;
@@ -30,12 +30,10 @@ const getAccuracyTextColor = (accuracy: number): string => {
 };
 
 const getStatusColor = (status: string): string => {
-  return status === 'Active'
-    ? 'bg-green-100 text-green-800'
-    : 'bg-gray-100 text-gray-800';
+  return status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 };
 
-export default function ShowroomActivityPage() {
+export default function ShowroomActivityClient() {
   const [showroomData, setShowroomData] = useState<ShowroomActivity[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'visitors' | 'accuracy' | 'name'>('visitors');
@@ -47,11 +45,9 @@ export default function ShowroomActivityPage() {
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (!token) throw new Error('Not authenticated');
-        const params = new URLSearchParams();
-        params.set('ts', String(Date.now()));
-        const res = await fetch(`${baseUrl}/api/user/analytics/showroom-summary?${params.toString()}`, {
+        const res = await fetch(`${baseUrl}/api/user/analytics/showroom-summary?ts=${Date.now()}`, {
           headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store',
+          cache: 'no-store'
         });
         if (!res.ok) throw new Error('Failed to load');
         const data = await res.json();
@@ -73,12 +69,8 @@ export default function ShowroomActivityPage() {
     load();
   }, []);
 
-  // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
-    let filtered = showroomData.filter((showroom) =>
-      showroom.showroomName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
+    let filtered = showroomData.filter((showroom) => showroom.showroomName.toLowerCase().includes(searchQuery.toLowerCase()));
     switch (sortBy) {
       case 'visitors':
         filtered.sort((a, b) => b.dailyVisitors - a.dailyVisitors);
@@ -90,18 +82,13 @@ export default function ShowroomActivityPage() {
         filtered.sort((a, b) => a.showroomName.localeCompare(b.showroomName));
         break;
     }
-
     return filtered;
   }, [showroomData, searchQuery, sortBy]);
 
-  // Calculate statistics
   const stats = useMemo(() => {
     const totalVisitors = showroomData.reduce((sum, s) => sum + s.dailyVisitors, 0);
-    const avgAccuracy = (
-      showroomData.reduce((sum, s) => sum + s.accuracy, 0) / showroomData.length
-    ).toFixed(1);
+    const avgAccuracy = (showroomData.reduce((sum, s) => sum + s.accuracy, 0) / (showroomData.length || 1)).toFixed(1);
     const activeShowrooms = showroomData.filter((s) => s.status === 'Active').length;
-
     return { totalVisitors, avgAccuracy, activeShowrooms };
   }, [showroomData]);
 
@@ -111,7 +98,6 @@ export default function ShowroomActivityPage() {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins} min ago`;
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
@@ -121,15 +107,12 @@ export default function ShowroomActivityPage() {
   return (
     <div className="min-h-screen p-8 bg-white">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Showroom Activity</h1>
           <p className="text-gray-600">Monitor showroom performance and visitor metrics</p>
         </div>
 
-        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Total Visitors */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -142,7 +125,6 @@ export default function ShowroomActivityPage() {
             </div>
           </div>
 
-          {/* Average Accuracy */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -155,14 +137,11 @@ export default function ShowroomActivityPage() {
             </div>
           </div>
 
-          {/* Active Showrooms */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-gray-600 mb-1">Active Showrooms</h3>
-                <p className="text-3xl font-bold text-gray-900">
-                  {stats.activeShowrooms}/{showroomData.length}
-                </p>
+                <p className="text-3xl font-bold text-gray-900">{stats.activeShowrooms}/{showroomData.length}</p>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">
                 <Activity className="w-6 h-6 text-purple-600" />
@@ -171,27 +150,13 @@ export default function ShowroomActivityPage() {
           </div>
         </div>
 
-        {/* Search and Sort */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Search */}
             <div>
-              <input
-                type="text"
-                placeholder="Search showrooms..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition"
-              />
+              <input type="text" placeholder="Search showrooms..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
             </div>
-
-            {/* Sort */}
             <div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'visitors' | 'accuracy' | 'name')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition"
-              >
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'visitors' | 'accuracy' | 'name')} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition">
                 <option value="visitors">Sort by: Daily Visitors</option>
                 <option value="accuracy">Sort by: Accuracy</option>
                 <option value="name">Sort by: Name</option>
@@ -200,142 +165,69 @@ export default function ShowroomActivityPage() {
           </div>
         </div>
 
-        {/* Activity Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {/* Table Header */}
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">
-              Showroom Performance ({filteredAndSortedData.length})
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900">Showroom Performance ({filteredAndSortedData.length})</h2>
           </div>
-
-          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Showroom Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Daily Visitors
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Accuracy
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Last Activity
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Status
-                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Showroom Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Daily Visitors</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Accuracy</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Last Activity</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAndSortedData.length > 0 ? (
                   filteredAndSortedData.map((showroom) => (
-                    <tr
-                      key={showroom.id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition"
-                    >
-                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                        {showroom.showroomName}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Users size={16} className="text-blue-600" />
-                          <span className="text-gray-900 font-medium">
-                            {showroom.dailyVisitors}
-                          </span>
-                        </div>
-                      </td>
+                    <tr key={showroom.id} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">{showroom.showroomName}</td>
+                      <td className="px-6 py-4 text-sm"><div className="flex items-center gap-2"><Users size={16} className="text-blue-600" /><span className="text-gray-900 font-medium">{showroom.dailyVisitors}</span></div></td>
                       <td className="px-6 py-4 text-sm">
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getAccuracyTextColor(showroom.accuracy)}`}>
-                              {showroom.accuracy}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all ${getAccuracyColor(
-                                showroom.accuracy
-                              )}`}
-                              style={{ width: `${showroom.accuracy}%` }}
-                            />
-                          </div>
+                          <div className="flex items-center gap-2"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${getAccuracyTextColor(showroom.accuracy)}`}>{showroom.accuracy}%</span></div>
+                          <div className="w-full bg-gray-200 rounded-full h-2"><div className={`h-2 rounded-full transition-all ${getAccuracyColor(showroom.accuracy)}`} style={{ width: `${showroom.accuracy}%` }} /></div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Clock size={16} />
-                          <span>{formatLastActivity(showroom.lastActivity)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                            showroom.status
-                          )}`}
-                        >
-                          {showroom.status}
-                        </span>
-                      </td>
+                      <td className="px-6 py-4 text-sm"><div className="flex items-center gap-2 text-gray-600"><Clock size={16} /><span>{formatLastActivity(showroom.lastActivity)}</span></div></td>
+                      <td className="px-6 py-4 text-sm"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(showroom.status)}`}>{showroom.status}</span></td>
                     </tr>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                      No showrooms found matching your search
-                    </td>
-                  </tr>
+                  <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No showrooms found matching your search</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Performance Summary */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Highest Accuracy */}
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-4">Highest Accuracy</h3>
             {showroomData.length > 0 && (
               <div>
-                <p className="text-lg font-bold text-gray-900">
-                  {showroomData.reduce((max, s) => (s.accuracy > max.accuracy ? s : max)).showroomName}
-                </p>
-                <p className="text-2xl font-bold text-green-600 mt-1">
-                  {Math.max(...showroomData.map((s) => s.accuracy))}%
-                </p>
+                <p className="text-lg font-bold text-gray-900">{showroomData.reduce((max, s) => (s.accuracy > max.accuracy ? s : max)).showroomName}</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">{Math.max(...showroomData.map((s) => s.accuracy))}%</p>
               </div>
             )}
           </div>
 
-          {/* Most Visitors */}
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-4">Most Visitors</h3>
             {showroomData.length > 0 && (
               <div>
-                <p className="text-lg font-bold text-gray-900">
-                  {showroomData.reduce((max, s) => (s.dailyVisitors > max.dailyVisitors ? s : max)).showroomName}
-                </p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">
-                  {Math.max(...showroomData.map((s) => s.dailyVisitors))} visitors
-                </p>
+                <p className="text-lg font-bold text-gray-900">{showroomData.reduce((max, s) => (s.dailyVisitors > max.dailyVisitors ? s : max)).showroomName}</p>
+                <p className="text-2xl font-bold text-blue-600 mt-1">{Math.max(...showroomData.map((s) => s.dailyVisitors))} visitors</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Toast */}
-      <Toast
-        message={toastMessage}
-        show={showToast}
-        onClose={() => setShowToast(false)}
-        duration={3000}
-      />
+      <Toast message={toastMessage} show={showToast} onClose={() => setShowToast(false)} duration={3000} />
     </div>
   );
 }

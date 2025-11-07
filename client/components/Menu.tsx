@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMenu } from "@/components/MenuContext";
 
 const menuItems = [
@@ -18,6 +18,8 @@ const menuItems = [
 const Menu = () => {
   const { isOpen, toggle, close } = useMenu();
   const pathname = usePathname();
+  const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   const baseRoot = menuItems[0].href;
   const normalize = (s: string) => s.replace(/\/+$/g, "");
   const isActive = (href: string) => {
@@ -25,6 +27,24 @@ const Menu = () => {
     const h = normalize(href);
     if (h === normalize(baseRoot)) return p === h;
     return p === h || p.startsWith(h + "/");
+  };
+
+  const handleLogout = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      await fetch(`${baseUrl}/api/user/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }).catch(() => {});
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+      }
+      router.push("/");
+    }
   };
 
   return (
@@ -62,7 +82,7 @@ const Menu = () => {
 
         {/* Bottom */}
         <div className="flex flex-col items-center gap-4">
-          <Link href="/logout">
+          <button onClick={handleLogout}>
             <Image
               src="/logout.png"
               alt="logout"
@@ -70,7 +90,7 @@ const Menu = () => {
               height={24}
               className="opacity-70 hover:opacity-100"
             />
-          </Link>
+          </button>
           <Image
             src="/tushar.jpg"
             alt="profile"
@@ -131,14 +151,13 @@ const Menu = () => {
 
         {/* Bottom Section */}
         <div className="mt-auto p-6 border-t border-gray-300 flex flex-col gap-4">
-          <Link
-            href="/logout"
-            onClick={close}
+          <button
+            onClick={() => { close(); handleLogout(); }}
             className="flex items-center gap-4 p-3 rounded-lg hover:bg-white hover:bg-opacity-30 transition"
           >
             <Image src="/logout.png" alt="logout" width={24} height={24} />
             <span className="text-[#3E4C3A] font-medium">Logout</span>
-          </Link>
+          </button>
           <div className="flex items-center gap-4 p-3">
             <Image
               src="/tushar.jpg"

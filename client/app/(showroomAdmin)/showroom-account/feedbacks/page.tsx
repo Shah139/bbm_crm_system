@@ -1,110 +1,85 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MessageSquare, Calendar, Phone, Search } from 'lucide-react';
-import Link from 'next/link';
 import Toast from '@/components/Toast';
+import { useRouter } from 'next/navigation';
 
-interface Feedback {
-  id: number;
+interface FeedbackItem {
+  id: string;
   customerName: string;
   phone: string;
-  feedback: string;
-  rating: number;
-  date: Date;
-  sentiment: 'Positive' | 'Neutral' | 'Negative';
+  message: string;
+  date: string;
+  showroom: string;
+  category: string;
+  email?: string;
+  status: 'new' | 'reviewed' | 'resolved';
 }
 
-// Mock data generator
-const generateFeedbackData = (): Feedback[] => {
-  const feedbackMessages = [
-    'Great experience! The staff was very helpful.',
-    'Good products but could improve the checkout process.',
-    'Excellent quality and fast delivery.',
-    'The showroom was clean and well-organized.',
-    'Need more variety in product selection.',
-    'Outstanding customer service!',
-    'Average experience, nothing special.',
-    'Very satisfied with my purchase.',
-    'The product quality exceeded my expectations.',
-    'Staff was knowledgeable and friendly.',
-    'Could use better pricing.',
-    'Highly recommend this showroom!',
-    'Disappointed with the service.',
-    'Product arrived damaged.',
-    'Amazing! Will come back again.',
-  ];
-
-  const sentiments: ('Positive' | 'Neutral' | 'Negative')[] = ['Positive', 'Neutral', 'Negative'];
-  const feedback: Feedback[] = [];
-
-  for (let i = 1; i <= 50; i++) {
-    const daysAgo = Math.floor(Math.random() * 30);
-    const date = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
-
-    feedback.push({
-      id: i,
-      customerName: `Customer ${i}`,
-      phone: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-      feedback: feedbackMessages[Math.floor(Math.random() * feedbackMessages.length)],
-      rating: Math.floor(Math.random() * 5) + 1,
-      date,
-      sentiment: sentiments[Math.floor(Math.random() * sentiments.length)],
-    });
-  }
-
-  return feedback;
-};
-
-const getSentimentColor = (sentiment: string): string => {
-  switch (sentiment) {
-    case 'Positive':
-      return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-    case 'Neutral':
-      return 'bg-amber-50 text-amber-700 border border-amber-200';
-    case 'Negative':
-      return 'bg-rose-50 text-rose-700 border border-rose-200';
-    default:
-      return 'bg-slate-50 text-slate-700 border border-slate-200';
-  }
-};
-
-const getRatingStars = (rating: number): string => {
-  return '⭐'.repeat(rating);
-};
-
 export default function FeedbackSummaryPage() {
-  const [feedbackData] = useState<Feedback[]>(generateFeedbackData());
+  const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [phoneSearch, setPhoneSearch] = useState<string>('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // Get unique dates for filter
+  const fetchFeedbacks = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return;
+      const res = await fetch(`${baseUrl}/api/user/feedbacks?page=1&limit=100`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        try {
+          await fetch(`${baseUrl}/api/user/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+        } catch {}
+        if (typeof window !== 'undefined') localStorage.removeItem('token');
+        router.push('/');
+        return;
+      }
+      if (!res.ok) throw new Error('Failed to load feedbacks');
+      const data = await res.json();
+      const items: FeedbackItem[] = (data.feedbacks || []).map((d: any) => ({
+        id: d.id,
+        customerName: d.name,
+        phone: d.phone || '',
+        message: d.message || '',
+        date: d.createdAt,
+        showroom: d.showroom || '',
+        category: d.category || '',
+        email: d.email || '',
+        status: (d.status as any) || 'new',
+      }));
+      setFeedbacks(items);
+    } catch (e: any) {
+      setToastMessage(e?.message || 'Error loading feedbacks');
+      setShowToast(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeedbacks();
+  }, []);
+
   const uniqueDates = useMemo(() => {
-    return Array.from(new Set(feedbackData.map((f) => f.date.toISOString().split('T')[0]))).sort().reverse();
-  }, [feedbackData]);
+    return Array.from(new Set(feedbacks.map((f) => (f.date || '').toString().split('T')[0]))).sort().reverse();
+  }, [feedbacks]);
 
-  // Filter feedback based on date and phone search
   const filteredFeedback = useMemo(() => {
-    return feedbackData.filter((item) => {
-      const dateMatch = !selectedDate || item.date.toISOString().split('T')[0] === selectedDate;
-      const phoneMatch = !phoneSearch || item.phone.includes(phoneSearch);
+    return feedbacks.filter((item) => {
+      const dateStr = (item.date || '').toString().split('T')[0];
+      const dateMatch = !selectedDate || dateStr === selectedDate;
+      const phoneMatch = !phoneSearch || (item.phone || '').includes(phoneSearch);
       return dateMatch && phoneMatch;
     });
-  }, [feedbackData, selectedDate, phoneSearch]);
+  }, [feedbacks, selectedDate, phoneSearch]);
 
-  // Calculate statistics
   const stats = useMemo(() => {
-    const positive = filteredFeedback.filter((f) => f.sentiment === 'Positive').length;
-    const neutral = filteredFeedback.filter((f) => f.sentiment === 'Neutral').length;
-    const negative = filteredFeedback.filter((f) => f.sentiment === 'Negative').length;
-    const avgRating =
-      filteredFeedback.length > 0
-        ? (filteredFeedback.reduce((sum, f) => sum + f.rating, 0) / filteredFeedback.length).toFixed(1)
-        : 0;
-
-    return { positive, neutral, negative, total: filteredFeedback.length, avgRating };
+    return { total: filteredFeedback.length };
   }, [filteredFeedback]);
 
   const handleClearFilters = () => {
@@ -119,7 +94,6 @@ export default function FeedbackSummaryPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-10">
-
           <h1 className="text-4xl font-bold text-slate-900 mb-2">Feedback Summary</h1>
           <p className="text-slate-600 text-lg">View and analyze customer feedback and reviews</p>
         </div>
@@ -200,7 +174,6 @@ export default function FeedbackSummaryPage() {
           </div>
         </div>
 
-
         {/* Feedback Table */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
           {/* Table Header */}
@@ -242,14 +215,14 @@ export default function FeedbackSummaryPage() {
 
                       {/* Feedback */}
                       <td className="px-8 py-5 text-sm text-slate-600 max-w-xs">
-                        <div className="truncate hover:text-clip" title={feedback.feedback}>
-                          {feedback.feedback}
+                        <div className="truncate hover:text-clip" title={feedback.message}>
+                          {feedback.message}
                         </div>
                       </td>
 
                       {/* Date */}
                       <td className="px-8 py-5 text-sm text-slate-600 font-medium">
-                        {feedback.date.toLocaleDateString('en-US', {
+                        {new Date(feedback.date).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
@@ -274,7 +247,7 @@ export default function FeedbackSummaryPage() {
             <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
               <p className="text-sm text-slate-600 font-medium">
                 Showing <span className="font-bold text-slate-900">{filteredFeedback.length}</span> of{' '}
-                <span className="font-bold text-slate-900">{feedbackData.length}</span> feedback entries
+                <span className="font-bold text-slate-900">{feedbacks.length}</span> feedback entries
               </p>
             </div>
           )}

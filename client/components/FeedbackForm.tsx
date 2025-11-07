@@ -12,6 +12,7 @@ export default function FeedbackFormPage() {
     phone: string;
     message: string;
     category: string;
+    showroom: string;
   }
 
   const [formData, setFormData] = useState<FormData>({
@@ -20,6 +21,7 @@ export default function FeedbackFormPage() {
     phone: '',
     message: '',
     category: '',
+    showroom: '',
   });
 
   const [toastMessage, setToastMessage] = useState('');
@@ -27,6 +29,7 @@ export default function FeedbackFormPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [showrooms, setShowrooms] = useState<string[]>([]);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -41,6 +44,19 @@ export default function FeedbackFormPage() {
       } catch {}
     };
     load();
+  }, []);
+
+  useEffect(() => {
+    const loadShowrooms = async () => {
+      try {
+        const res = await fetch(`${baseUrl}/api/user/showrooms-public`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = (data.showrooms || []).map((s: any) => s.name || s);
+        setShowrooms(items);
+      } catch {}
+    };
+    loadShowrooms();
   }, []);
 
   const handleInputChange = (
@@ -78,6 +94,9 @@ export default function FeedbackFormPage() {
     if (!formData.category.trim()) {
       errors.category = 'Please select a category';
     }
+    if (!formData.showroom.trim()) {
+      errors.showroom = 'Please select a showroom';
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -103,8 +122,10 @@ export default function FeedbackFormPage() {
           phone: formData.phone,
           message: formData.message,
           category: formData.category,
+          showroom: formData.showroom,
         }),
       });
+
       if (!res.ok) throw new Error('Failed to submit feedback');
       setToastMessage('Thank you! Your feedback has been submitted successfully.');
       setShowToast(true);
@@ -114,7 +135,9 @@ export default function FeedbackFormPage() {
         phone: '',
         message: '',
         category: '',
+        showroom: '',
       });
+
       setFormErrors({});
     } catch {
       setToastMessage('Failed to submit feedback. Please try again.');
@@ -233,6 +256,32 @@ export default function FeedbackFormPage() {
               </select>
               {formErrors.category && (
                 <p className="text-red-600 text-xs md:text-sm mt-1">{formErrors.category}</p>
+              )}
+            </div>
+
+            {/* Showroom */}
+            <div>
+              <label htmlFor="showroom" className="block text-sm md:text-base font-semibold text-gray-900 mb-2">
+                Showroom
+              </label>
+              <select
+                name="showroom"
+                id="showroom"
+                value={formData.showroom}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-3 text-sm md:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition ${
+                  formErrors.showroom ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-100'
+                }`}
+              >
+                <option value="">Select showroom</option>
+                {showrooms.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              {formErrors.showroom && (
+                <p className="text-red-600 text-xs md:text-sm mt-1">{formErrors.showroom}</p>
               )}
             </div>
 

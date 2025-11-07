@@ -21,7 +21,7 @@ interface SubmitResponse {
 
 interface CategoryOption { id: string; name: string }
 const categoriesStatic: string[] = [];
-const showrooms = ['Showroom A', 'Showroom B', 'Showroom C', 'Showroom D', 'Showroom E'];
+const initialShowrooms: string[] = [];
 
 // Get today's date in YYYY-MM-DD format
 const getTodayDate = (): string => {
@@ -35,10 +35,11 @@ export default function AddCustomerPage() {
     phoneNumber: '',
     category: '',
     visitDate: getTodayDate(),
-    showroomBranch: showrooms[0],
+    showroomBranch: '',
   });
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [showrooms, setShowrooms] = useState<string[]>(initialShowrooms);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -105,6 +106,20 @@ export default function AddCustomerPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    const loadShowrooms = async () => {
+      try {
+        const res = await fetch(`${baseUrl}/api/user/showrooms-public`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const items: string[] = (data.showrooms || []).map((s: any) => s.name || s);
+        setShowrooms(items);
+        setFormData((prev) => ({ ...prev, showroomBranch: prev.showroomBranch || items[0] || '' }));
+      } catch {}
+    };
+    loadShowrooms();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -148,7 +163,7 @@ export default function AddCustomerPage() {
         phoneNumber: '',
         category: '',
         visitDate: getTodayDate(),
-        showroomBranch: showrooms[0],
+        showroomBranch: showrooms[0] || '',
       });
       setFormErrors({});
     } catch (error: any) {
@@ -312,6 +327,7 @@ export default function AddCustomerPage() {
                     : 'border-slate-200'
                 }`}
               >
+                <option value="" disabled>Select a showroom</option>
                 {showrooms.map((showroom) => (
                   <option key={showroom} value={showroom}>
                     {showroom}
@@ -353,7 +369,7 @@ export default function AddCustomerPage() {
 
       {/* Success Confirmation Modal */}
       {showConfirmation && submittedData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center ">
           <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 animate-in fade-in zoom-in-95 duration-300">
             {/* Close Button */}
             <button
@@ -416,7 +432,7 @@ export default function AddCustomerPage() {
               {/* Action Buttons */}
               <div className="flex gap-3">
                 <Link
-                  href="/admin"
+                  href="/showroom-account"
                   className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition"
                 >
                   Back to Dashboard

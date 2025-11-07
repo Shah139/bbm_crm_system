@@ -46,7 +46,7 @@ export default function DashboardChartsClient({ activityData, interestData }: Da
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-gray-900">Interest by Category</h2>
-            <a href="#" className="text-sm text-blue-600 hover:text-blue-800">See Details</a>
+            <a href="/admin/categories" className="text-sm text-blue-600 hover:text-blue-800">See Details</a>
           </div>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">

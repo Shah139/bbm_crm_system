@@ -111,7 +111,11 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
       if (!token) return;
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const res = await fetch(`${baseUrl}/api/user/admins`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) throw new Error('Failed to load users');
+      if (res.status === 403) {
+        throw new Error('You need admin role to access this feature');
+      } else if (!res.ok) {
+        throw new Error('Failed to load users');
+      }
       const data = await res.json();
       const users: User[] = (data.users || []).map((u: any) => ({
         id: u.id,

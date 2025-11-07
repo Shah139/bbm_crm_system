@@ -47,20 +47,27 @@ export default function LoginForm() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ email, password }),
+          credentials: 'include',
         })
 
         if (response.ok) {
           const data = await response.json()
           if (typeof window !== 'undefined' && data?.token) {
+            // Clear auth failure flag FIRST before saving token
+            try { sessionStorage.removeItem('auth_failed'); } catch { }
             localStorage.setItem('token', data.token)
+            if (data?.user) {
+              try { localStorage.setItem('user', JSON.stringify(data.user)); } catch { }
+            }
           }
-          const role = data?.role
+          const role = data?.user?.role
+          // Use replace instead of push to avoid navigation issues and ensure clean redirect
           if (role === 'admin') {
-            router.push('/admin')
+            router.replace('/admin')
           } else if (role === 'officeAdmin') {
-            router.push('/office-admin')
+            router.replace('/office-admin')
           } else if (role === 'showroom') {
-            router.push('/showroom-account')
+            router.replace('/showroom-account')
           } else {
             setErrors({ email: 'Unknown role. Contact support.' })
           }
@@ -104,9 +111,8 @@ export default function LoginForm() {
               if (errors.email) setErrors({ ...errors, email: undefined })
             }}
             placeholder="you@example.com"
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${
-              errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
-            }`}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
+              }`}
           />
           {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
@@ -125,9 +131,8 @@ export default function LoginForm() {
               if (errors.password) setErrors({ ...errors, password: undefined })
             }}
             placeholder="••••••••"
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${
-              errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
-            }`}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
+              }`}
           />
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
@@ -135,9 +140,8 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className={`w-full py-2 px-4 rounded-lg font-semibold text-white transition duration-200 ${
-            isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
-          }`}
+          className={`w-full py-2 px-4 rounded-lg font-semibold text-white transition duration-200 ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
+            }`}
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">

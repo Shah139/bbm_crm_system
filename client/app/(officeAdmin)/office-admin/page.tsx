@@ -1,5 +1,5 @@
-import OfficeDashboardServer from "@/components/OfficeDashboardServer";
+import OfficeDashboardClient from "@/components/OfficeDashboardClient";
 
 export default function Page() {
-  return <OfficeDashboardServer />;
+  return <OfficeDashboardClient />;
 }

@@ -1,50 +1,37 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Edit2, Trash2, X, Save, Calendar } from 'lucide-react';
-import Link from 'next/link';
 import Toast from '@/components/Toast';
 
 interface Customer {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   category: string;
   visitDate: string;
+  createdAt: string;
   feedbackStatus: 'Received' | 'Pending' | 'No Feedback';
 }
 
 interface EditingCustomer {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   category: string;
 }
 
-// Mock data generator for today's entries
-const generateTodayEntries = (): Customer[] => {
-  const interests = ['Electronics', 'Furniture', 'Clothing', 'Home & Garden', 'Sports', 'Beauty'];
-  const statuses: ('Received' | 'Pending' | 'No Feedback')[] = ['Received', 'Pending', 'No Feedback'];
-  const entries: Customer[] = [];
-
-  for (let i = 1; i <= 15; i++) {
-    const hour = String(Math.floor(Math.random() * 18) + 6).padStart(2, '0');
-    const minute = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-    
-    entries.push({
-      id: i,
-      name: `Customer ${i}`,
-      phone: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
-      category: interests[Math.floor(Math.random() * interests.length)],
-      visitDate: `${hour}:${minute}`,
-      feedbackStatus: statuses[Math.floor(Math.random() * statuses.length)],
-    });
+const formatVisitTime = (iso: string): string => {
+  try {
+    const d = new Date(iso);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  } catch {
+    return iso;
   }
-
-  return entries;
 };
 
-const categories = ['Electronics', 'Furniture', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'Toys', 'Beauty'];
 
 const getFeedbackStatusColor = (status: string): string => {
   switch (status) {
@@ -60,13 +47,98 @@ const getFeedbackStatusColor = (status: string): string => {
 };
 
 export default function EditEntriesPage() {
-  const [customers, setCustomers] = useState<Customer[]>(generateTodayEntries());
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<EditingCustomer | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const [categories, setCategories] = useState<string[]>([]);
+
+  const show = (msg: string) => { setToastMessage(msg); setShowToast(true); };
+
+  const normalizePhone = (p: string): string => {
+    const digits = (p || '').replace(/\D+/g, '');
+    if (digits.length >= 10) return digits.slice(-10);
+    return digits;
+  };
+
+  const isToday = (iso: string): boolean => {
+    try {
+      const d = new Date(iso);
+      const today = new Date();
+      return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+    } catch { return false; }
+  };
+
+  const isWithinHours = (iso: string, hours: number): boolean => {
+    try {
+      const d = new Date(iso).getTime();
+      const now = Date.now();
+      return now - d <= hours * 60 * 60 * 1000;
+    } catch { return false; }
+  };
+
+  const loadCustomers = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return show('Not authenticated');
+      const [custRes, fbRes] = await Promise.all([
+        fetch(`${baseUrl}/api/user/showroom/customers?limit=500`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${baseUrl}/api/user/feedbacks?page=1&limit=500`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (!custRes.ok) throw new Error('Failed to load entries');
+      if (fbRes.status === 401) {
+        try { await fetch(`${baseUrl}/api/user/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }); } catch {}
+        if (typeof window !== 'undefined') localStorage.removeItem('token');
+        return;
+      }
+      const [custData, fbData] = await Promise.all([custRes.json(), fbRes.ok ? fbRes.json() : Promise.resolve({ feedbacks: [] })]);
+      const fbPhones = new Set<string>((fbData.feedbacks || []).map((f: any) => normalizePhone(f.phone || '')));
+      const mapped: Customer[] = (custData.customers || [])
+        .map((c: any) => {
+          const hasFeedback = fbPhones.has(normalizePhone(c.phoneNumber));
+          const status: 'Received' | 'Pending' | 'No Feedback' = hasFeedback
+            ? 'Received'
+            : isWithinHours(c.createdAt, 6)
+              ? 'Pending'
+              : 'No Feedback';
+          return {
+            id: String(c.id || c._id),
+            name: c.customerName,
+            phone: c.phoneNumber,
+            category: c.category,
+            visitDate: formatVisitTime(c.createdAt),
+            createdAt: c.createdAt,
+            feedbackStatus: status,
+          };
+        })
+        .filter((c: Customer) => isToday(c.createdAt));
+      setCustomers(mapped);
+    } catch (e: any) {
+      show(e?.message || 'Error loading entries');
+    }
+  };
+
+  useEffect(() => {
+    loadCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await fetch(`${baseUrl}/api/user/categories-public`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const names: string[] = (data.categories || []).map((c: any) => c.name || c);
+        setCategories(names);
+      } catch {}
+    };
+    loadCategories();
+  }, [baseUrl]);
 
   // Filter customers based on search
   const filteredCustomers = useMemo(() => {
@@ -87,46 +159,31 @@ export default function EditEntriesPage() {
     });
   };
 
-  const handleSaveEdit = (id: number) => {
+  const handleSaveEdit = async (id: string) => {
     if (!editingData) return;
 
-    // Validate fields
-    if (!editingData.name.trim()) {
-      setToastMessage('Customer name cannot be empty');
-      setShowToast(true);
-      return;
+    if (!editingData.name.trim()) return show('Customer name cannot be empty');
+    if (!editingData.phone.trim()) return show('Phone number cannot be empty');
+    if (!editingData.category) return show('Category cannot be empty');
+
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return show('Not authenticated');
+      const res = await fetch(`${baseUrl}/api/user/showroom/customers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ customerName: editingData.name, phoneNumber: editingData.phone, category: editingData.category }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      const data = await res.json();
+      const u = data.customer;
+      setCustomers(customers.map((c) => (c.id === id ? { ...c, name: u.customerName, phone: u.phoneNumber, category: u.category } : c)));
+      setEditingId(null);
+      setEditingData(null);
+      show('Customer information updated successfully!');
+    } catch (e: any) {
+      show(e?.message || 'Update failed');
     }
-
-    if (!editingData.phone.trim()) {
-      setToastMessage('Phone number cannot be empty');
-      setShowToast(true);
-      return;
-    }
-
-    if (!editingData.category) {
-      setToastMessage('Category cannot be empty');
-      setShowToast(true);
-      return;
-    }
-
-    // Update customer
-    setCustomers(
-      customers.map((customer) =>
-        customer.id === id
-          ? {
-              ...customer,
-              name: editingData.name,
-              phone: editingData.phone,
-              category: editingData.category,
-            }
-          : customer
-      )
-    );
-
-    setEditingId(null);
-    setEditingData(null);
-    setToastMessage('Customer information updated successfully!');
-    setShowToast(true);
   };
 
   const handleCancelEdit = () => {
@@ -134,12 +191,22 @@ export default function EditEntriesPage() {
     setEditingData(null);
   };
 
-  const handleDeleteConfirm = (id: number) => {
-    const customer = customers.find((c) => c.id === id);
-    setCustomers(customers.filter((c) => c.id !== id));
-    setDeleteConfirmId(null);
-    setToastMessage(`${customer?.name} has been deleted successfully!`);
-    setShowToast(true);
+  const handleDeleteConfirm = async (id: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return show('Not authenticated');
+      const res = await fetch(`${baseUrl}/api/user/showroom/customers/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      const customer = customers.find((c) => c.id === id);
+      setCustomers(customers.filter((c) => c.id !== id));
+      setDeleteConfirmId(null);
+      show(`${customer?.name || 'Entry'} has been deleted successfully!`);
+    } catch (e: any) {
+      show(e?.message || 'Delete failed');
+    }
   };
 
   const handleEditFieldChange = (field: keyof EditingCustomer, value: string) => {

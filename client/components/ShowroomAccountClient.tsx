@@ -6,7 +6,7 @@ import { Users, MessageSquare, TrendingUp, Plus, Calendar } from "lucide-react";
 import Toast from "@/components/Toast";
 
 export interface CustomerEntry {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   interest: string;
@@ -32,11 +32,86 @@ interface ShowroomAccountClientProps {
 }
 
 export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomAccountClientProps) {
-  const [todayEntries] = useState<CustomerEntry[]>(initialTodayEntries);
+  const [todayEntries, setTodayEntries] = useState<CustomerEntry[]>(initialTodayEntries || []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [formData, setFormData] = useState({ name: "", phone: "", interest: "" });
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+  const formatVisitTime = (iso: string): string => {
+    try {
+      const d = new Date(iso);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    } catch {
+      return '';
+    }
+  };
+
+  const normalizePhone = (p: string): string => {
+    const digits = (p || '').replace(/\D+/g, '');
+    if (digits.length >= 10) return digits.slice(-10);
+    return digits;
+  };
+
+  const isToday = (iso: string): boolean => {
+    try {
+      const d = new Date(iso);
+      const today = new Date();
+      return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+    } catch { return false; }
+  };
+
+  const isWithinHours = (iso: string, hours: number): boolean => {
+    try {
+      const d = new Date(iso).getTime();
+      const now = Date.now();
+      return now - d <= hours * 60 * 60 * 1000;
+    } catch { return false; }
+  };
+
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) return;
+        const [custRes, fbRes] = await Promise.all([
+          fetch(`${baseUrl}/api/user/showroom/customers?limit=500`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${baseUrl}/api/user/feedbacks?page=1&limit=500`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (fbRes.status === 401 || custRes.status === 401) {
+          // Soft fail: do not clear token; let AuthGuard handle redirects
+          return;
+        }
+        if (!custRes.ok) throw new Error('Failed to load entries');
+        const [custData, fbData] = await Promise.all([custRes.json(), fbRes.ok ? fbRes.json() : Promise.resolve({ feedbacks: [] })]);
+        const fbPhones = new Set<string>((fbData.feedbacks || []).map((f: any) => normalizePhone(f.phone || '')));
+        const items: CustomerEntry[] = (custData.customers || [])
+          .filter((c: any) => isToday(c.createdAt))
+          .map((c: any) => {
+            const hasFeedback = fbPhones.has(normalizePhone(c.phoneNumber));
+            const status: CustomerEntry["feedbackStatus"] = hasFeedback ? 'Received' : (isWithinHours(c.createdAt, 6) ? 'Pending' : 'No Feedback');
+            return {
+              id: String(c.id || c._id),
+              name: c.customerName,
+              phone: c.phoneNumber,
+              interest: c.category,
+              visitDate: formatVisitTime(c.createdAt),
+              feedbackStatus: status,
+            };
+          });
+        setTodayEntries(items);
+      } catch (e: any) {
+        setToastMessage(e?.message || 'Error loading dashboard');
+        setShowToast(true);
+      }
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stats = useMemo(() => {
     const feedbackReceived = todayEntries.filter((e) => e.feedbackStatus === "Received").length;

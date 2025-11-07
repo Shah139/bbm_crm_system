@@ -28,7 +28,35 @@ export const createFeedback = async (req, res) => {
 
 export const listFeedbacks = async (req, res) => {
   try {
-    const docs = await Feedback.find({}).sort({ createdAt: -1 });
+    const pageRaw = req.query.page;
+    const limitRaw = req.query.limit;
+    const showroom = (req.query.showroom || "").toString().trim();
+    const query = showroom ? { showroom } : {};
+
+    if (pageRaw !== undefined || limitRaw !== undefined) {
+      const page = Math.max(parseInt(String(pageRaw), 10) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(String(limitRaw), 10) || 20, 1), 100);
+      const skip = (page - 1) * limit;
+      const [total, docs] = await Promise.all([
+        Feedback.countDocuments(query),
+        Feedback.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      ]);
+      const feedbacks = docs.map((d) => ({
+        id: d._id.toString(),
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        message: d.message,
+        showroom: d.showroom || "",
+        category: d.category || "",
+        status: d.status,
+        createdAt: d.createdAt,
+      }));
+      res.set("Cache-Control", "private, max-age=30");
+      return res.status(200).json({ feedbacks, page, limit, total });
+    }
+
+    const docs = await Feedback.find(query).sort({ createdAt: -1 });
     const feedbacks = docs.map((d) => ({
       id: d._id.toString(),
       name: d.name,
@@ -40,6 +68,7 @@ export const listFeedbacks = async (req, res) => {
       status: d.status,
       createdAt: d.createdAt,
     }));
+    res.set("Cache-Control", "private, max-age=30");
     return res.status(200).json({ feedbacks });
   } catch (err) {
     return res.status(500).json({ message: "Server error" });

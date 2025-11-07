@@ -1,5 +1,5 @@
-import ShowroomAccountServer from "@/components/ShowroomAccountServer";
+import ShowroomAccountClient from "@/components/ShowroomAccountClient";
 
 export default function Page() {
-  return <ShowroomAccountServer />;
+  return <ShowroomAccountClient initialTodayEntries={[]} />;
 }

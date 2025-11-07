@@ -1,5 +1,6 @@
-import DashboardContentServer from "@/components/DashboardContentServer";
 import AuthGuard from "@/components/AuthGuard";
+import AdminOverviewCards from "@/components/AdminOverviewCards";
+import AdminDashboardBodyClient from "@/components/AdminDashboardBodyClient";
 
 export default function AdminPage() {
     return (
@@ -12,7 +13,10 @@ export default function AdminPage() {
                         </div>
                     </div>
                 </header>
-                <DashboardContentServer />
+                    <main className="flex-1 overflow-y-auto p-4 md:p-8">
+                      <AdminOverviewCards />
+                      <AdminDashboardBodyClient />
+                    </main>
             </div>
         </AuthGuard>
     );
