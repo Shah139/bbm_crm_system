@@ -28,6 +28,17 @@ const corsOptions = {
 app.use(cors(corsOptions));
 // Explicitly handle preflight for all routes
 app.options('*', cors(corsOptions));
+// Guarantee CORS headers on all responses (defensive, esp. for error paths)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+});
+  
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
