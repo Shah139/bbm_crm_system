@@ -21,6 +21,9 @@ export default function FeedbackSummaryPage() {
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [phoneSearch, setPhoneSearch] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(20);
+  const [total, setTotal] = useState<number>(0);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const router = useRouter();
@@ -30,7 +33,7 @@ export default function FeedbackSummaryPage() {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!token) return;
-      const res = await fetch(`${baseUrl}/api/user/feedbacks?page=1&limit=100`, {
+      const res = await fetch(`${baseUrl}/api/user/feedbacks?page=${page}&limit=${limit}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
@@ -55,6 +58,7 @@ export default function FeedbackSummaryPage() {
         status: (d.status as any) || 'new',
       }));
       setFeedbacks(items);
+      if (typeof data.total === 'number') setTotal(data.total);
     } catch (e: any) {
       setToastMessage(e?.message || 'Error loading feedbacks');
       setShowToast(true);
@@ -63,7 +67,7 @@ export default function FeedbackSummaryPage() {
 
   useEffect(() => {
     fetchFeedbacks();
-  }, []);
+  }, [page, limit]);
 
   const uniqueDates = useMemo(() => {
     return Array.from(new Set(feedbacks.map((f) => (f.date || '').toString().split('T')[0]))).sort().reverse();
@@ -87,6 +91,7 @@ export default function FeedbackSummaryPage() {
     setPhoneSearch('');
     setToastMessage('Filters cleared!');
     setShowToast(true);
+    setPage(1);
   };
 
   return (
@@ -127,7 +132,7 @@ export default function FeedbackSummaryPage() {
               </label>
               <select
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => { setSelectedDate(e.target.value); setPage(1); }}
                 className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 transition bg-white text-slate-900 font-medium"
               >
                 <option value="">All Dates</option>
@@ -156,7 +161,7 @@ export default function FeedbackSummaryPage() {
                   type="text"
                   placeholder="Enter phone number..."
                   value={phoneSearch}
-                  onChange={(e) => setPhoneSearch(e.target.value)}
+                  onChange={(e) => { setPhoneSearch(e.target.value); setPage(1); }}
                   className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 transition text-slate-900 font-medium"
                 />
               </div>
@@ -244,11 +249,27 @@ export default function FeedbackSummaryPage() {
 
           {/* Table Footer */}
           {filteredFeedback.length > 0 && (
-            <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
-              <p className="text-sm text-slate-600 font-medium">
-                Showing <span className="font-bold text-slate-900">{filteredFeedback.length}</span> of{' '}
-                <span className="font-bold text-slate-900">{feedbacks.length}</span> feedback entries
-              </p>
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4">
+              <div className="text-sm text-slate-600 font-medium">
+                Page <span className="font-bold text-slate-900">{page}</span> of{' '}
+                <span className="font-bold text-slate-900">{Math.max(1, Math.ceil((total || 0) / limit))}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold ${page <= 1 ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= Math.ceil((total || 0) / limit)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold ${page >= Math.ceil((total || 0) / limit) ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>

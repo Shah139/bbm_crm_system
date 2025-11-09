@@ -49,7 +49,6 @@ export default function FeedbacksClient() {
         body: JSON.stringify({ status }),
       });
       if (res.status === 401) {
-        // Soft fail: do not clear token or navigate; let AuthGuard handle
         return;
       }
       if (!res.ok) throw new Error('Failed to update status');
@@ -71,7 +70,7 @@ export default function FeedbacksClient() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
-        try { await fetch(`${baseUrl}/api/user/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }); } catch {}
+        try { await fetch(`${baseUrl}/api/user/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }); } catch { }
         if (typeof window !== 'undefined') localStorage.removeItem('token');
         router.push('/');
         return;
@@ -95,7 +94,6 @@ export default function FeedbacksClient() {
         cache: 'no-store'
       });
       if (res.status === 401) {
-        // Soft fail: do not clear token or navigate; let AuthGuard handle
         return;
       }
       if (!res.ok) throw new Error('Failed to load feedbacks');
