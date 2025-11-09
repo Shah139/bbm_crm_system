@@ -98,9 +98,9 @@ export default function ReportsClient() {
         id: idx + 1,
         showroom: r.showroom || 'Unknown',
         category: (r.category ?? '').toString() || (selectedCategory !== 'all' ? selectedCategory : 'Uncategorized'),
-        customerCount: Number(r.customerCount || 0),
-        feedbackCount: Number(r.feedbackCount || 0),
-        prevMonthPerformance: r.customerCount > 0 ? Math.round((Number(r.feedbackCount || 0) / Number(r.customerCount || 1)) * 100) : 0,
+        customerCount: Number(r.customers || 0),
+        feedbackCount: Number(r.feedbacks || 0),
+        prevMonthPerformance: Number(r.customers || 0) > 0 ? Math.round((Number(r.feedbacks || 0) / Number(r.customers || 1)) * 100) : 0,
         date: nowDate,
       }));
       // Exclude showrooms that are no longer present by fetching the latest public list (authoritative)
@@ -182,8 +182,8 @@ export default function ReportsClient() {
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
         dateMatch = item.date >= lastMonth && item.date <= lastMonthEnd;
       }
-      const showroomMatch = selectedShowroom === 'all' || item.showroom === selectedShowroom;
-      const categoryMatch = selectedCategory === 'all' || item.category === selectedCategory;
+      const showroomMatch = selectedShowroom === 'all' || (item.showroom || '').trim().toLowerCase() === (selectedShowroom || '').trim().toLowerCase();
+      const categoryMatch = selectedCategory === 'all' || (item.category || '').trim().toLowerCase() === (selectedCategory || '').trim().toLowerCase();
       return dateMatch && showroomMatch && categoryMatch;
     });
   }, [allData, dateRange, selectedShowroom, selectedCategory]);
