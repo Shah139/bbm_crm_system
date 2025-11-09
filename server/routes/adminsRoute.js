@@ -47,6 +47,11 @@ export const requireAuth = async (req, res, next) => {
 
 router.get("/me", requireAuth, me);
 
+// Analytics routes
+router.get("/analytics/showroom-summary", requireAuth, showroomSummary);
+router.get("/analytics/showroom-report", requireAuth, showroomReport);
+router.get("/analytics/showroom-daily", requireAuth, showroomDaily);
+
 const requireAdmin = (req, res, next) => {
   if (req.user?.role !== "admin") return res.status(403).json({ message: "Forbidden" });
   next();

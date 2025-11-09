@@ -92,8 +92,13 @@ export default function ReportsClient() {
       });
       if (!res.ok) throw new Error('Failed to generate report');
       const data = await res.json();
-      const rows: any[] = Array.isArray(data.rows) ? data.rows : [];
+      if (!data || !Array.isArray(data.rows)) {
+        console.error('Unexpected API response format:', data);
+        throw new Error('Invalid data format received from server');
+      }
+      const rows: any[] = data.rows;
       const nowDate = new Date();
+      console.log('Received rows:', rows); // Debug log
       const mappedAll: ReportItem[] = rows.map((r, idx) => ({
         id: idx + 1,
         showroom: r.showroom || 'Unknown',
@@ -113,7 +118,7 @@ export default function ReportsClient() {
           currentNames = (pubJs.showrooms || []).map((s: any) => s.name || String(s));
           setShowrooms(currentNames);
         }
-      } catch {}
+      } catch { }
       const currentSet = new Set(currentNames.map(s => s.trim().toLowerCase()));
       const filtered = mappedAll.filter(it => currentSet.has((it.showroom || '').trim().toLowerCase()));
       setAllData(filtered);
@@ -165,8 +170,27 @@ export default function ReportsClient() {
     loadAdminShowrooms();
   }, []);
 
-  useEffect(() => { handleGenerateReport(); }, []);
-  useEffect(() => { handleGenerateReport(); }, [dateRange, selectedShowroom, selectedCategory]);
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        setIsGenerating(true);
+        await handleGenerateReport();
+      } catch (error: any) {
+        console.error('Failed to initialize reports:', error);
+        setToastMessage(error?.message || 'Failed to load initial report data');
+        setShowToast(true);
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+    initializeData();
+  }, []);
+
+  useEffect(() => {
+    if (dateRange || selectedShowroom || selectedCategory) {
+      handleGenerateReport();
+    }
+  }, [dateRange, selectedShowroom, selectedCategory]);
 
   const filteredData = useMemo<ReportItem[]>(() => {
     const now = new Date();
@@ -504,7 +528,7 @@ export default function ReportsClient() {
                       const fromMap = items.find(s => s.name.trim().toLowerCase() === key)?.id || null;
                       targetId = adminShowroomIdByName[key] || fromMap || null;
                     }
-                  } catch {}
+                  } catch { }
                 }
 
                 if (targetId) {
