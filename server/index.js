@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || "")
+const ALLOWED_ORIGINS = ("https://bbm-crm.onrender.com/" || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
@@ -20,8 +20,6 @@ const corsOptions = {
     // Allow non-browser requests (no origin header)
     if (!origin) return callback(null, true);
 
-    // If no allowed origins configured, default to allowing any origin.
-    // This helps avoid accidental CORS failures when env var is missing.
     if (ALLOWED_ORIGINS.length === 0) {
       console.log("⚠️  No ALLOWED_ORIGINS configured - allowing any origin for CORS");
       return callback(null, true);
