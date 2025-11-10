@@ -1,4 +1,4 @@
-﻿import AuthGuard from "@/components/AuthGuard";
+﻿
 import AdminOverviewCards from "@/components/admin/AdminOverviewCards";
 import AdminDashboardBodyClient from "@/components/admin/AdminDashboardBodyClient";
 

@@ -1,4 +1,4 @@
-﻿import AuthGuard from "@/components/AuthGuard";
+﻿
 import CategoryManagementClient from "@/components/admin/CategoryManagementClient";
 
 interface Category {
