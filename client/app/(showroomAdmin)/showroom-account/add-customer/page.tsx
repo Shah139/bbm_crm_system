@@ -205,8 +205,8 @@ export default function AddCustomerPage() {
                   onChange={handleInputChange}
                   placeholder="Enter customer's full name"
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition text-slate-900 font-medium ${formErrors.customerName
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-slate-200 bg-white'
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-slate-200 bg-white'
                     }`}
                 />
                 {formErrors.customerName && (
@@ -232,8 +232,8 @@ export default function AddCustomerPage() {
                   onChange={handleInputChange}
                   placeholder="+1 (555) 123-4567"
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition text-slate-900 font-medium ${formErrors.phoneNumber
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-slate-200 bg-white'
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-slate-200 bg-white'
                     }`}
                 />
                 {formErrors.phoneNumber && (
@@ -260,8 +260,8 @@ export default function AddCustomerPage() {
                   value={formData.category}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 font-medium ${formErrors.category
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-slate-200'
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-slate-200'
                     }`}
                 >
                   <option value="">Select a category</option>
@@ -291,8 +291,8 @@ export default function AddCustomerPage() {
                   value={formData.visitDate}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 font-medium ${formErrors.visitDate
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-slate-200'
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-slate-200'
                     }`}
                 />
                 {formErrors.visitDate && (
@@ -317,8 +317,8 @@ export default function AddCustomerPage() {
                 value={formData.showroomBranch}
                 onChange={handleInputChange}
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 font-medium ${formErrors.showroomBranch
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-slate-200'
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-slate-200'
                   }`}
               >
                 <option value="" disabled>Select a showroom</option>
@@ -338,22 +338,21 @@ export default function AddCustomerPage() {
               )}
             </div>
 
-            { }
             <div className="border-t border-slate-200 pt-8"></div>
 
-            { }
             <div className="flex items-center justify-center">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-4 bg-linear-0-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-400 text-white rounded-xl font-bold transition shadow-lg flex items-center justify-center gap-2"
+                className="px-6 py-4 bg-black text-white rounded-xl font-bold flex items-center justify-center gap-2
+             transition-all duration-200 shadow-lg hover:bg-neutral-900 hover:shadow-xl 
+             disabled:bg-neutral-400 disabled:text-gray-200 disabled:cursor-not-allowed"
               >
                 <Send size={20} />
                 {isSubmitting ? 'Submitting...' : 'Submit & Send SMS'}
               </button>
             </div>
 
-            { }
             <p className="text-xs text-slate-500 text-center mt-4">
               By submitting, an SMS will be sent to the customer with their entry confirmation.
             </p>
