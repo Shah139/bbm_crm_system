@@ -1,9 +1,10 @@
-﻿import Navbar from "@/components/Navbar";
+import Navbar from "@/components/Navbar";
 import ShowroomMenu from "@/components/showroomAdmin/ShowroomMenu";
 import ShowroomNavbar from "@/components/showroomAdmin/ShowroomNavbar";
 import { MenuProvider as ShowroomMenuProvider } from "@/components/showroomAdmin/ShowroomMenuContext";
 import { MenuProvider as AdminMenuProvider } from "@/components/MenuContext";
 import AuthGuard from "@/components/AuthGuard";
+import PageTransition from "@/components/PageTransition";
 
 export default function DashboardLayout({
   children,
@@ -19,13 +20,19 @@ export default function DashboardLayout({
                 </div>
                 <div className="w-[92%] lg:w-[84%] xl:w-[86%] bg-white overflow-scroll flex flex-col">
                   <Navbar />
-                  {children}
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
                 </div>
               </div>
               <div className="md:hidden relative">
                 <ShowroomMenu />
                 <ShowroomNavbar />
-                <div className="bg-white">{children}</div>
+                <div className="bg-white">
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
+                </div>
               </div>
             </div>
           </ShowroomMenuProvider>

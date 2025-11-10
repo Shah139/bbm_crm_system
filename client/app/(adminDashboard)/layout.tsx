@@ -1,7 +1,7 @@
 import Menu from "@/components/Menu";
 import Navbar from "@/components/Navbar";
 import { MenuProvider } from "@/components/MenuContext";
-import PageFade from "@/components/PageFade";
+import PageTransition from "@/components/PageTransition";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -19,18 +19,18 @@ export default function DashboardLayout({
           </div>
           <div className="w-[92%] lg:w-[84%] xl:w-[86%] bg-white overflow-scroll flex flex-col">
             <Navbar />
-            <PageFade>
+            <PageTransition>
               {children}
-            </PageFade>
+            </PageTransition>
           </div>
         </div>
         <div className="md:hidden relative">
           <Menu />
           <Navbar />
           <div className="bg-white">
-            <PageFade>
+            <PageTransition>
               {children}
-            </PageFade>
+            </PageTransition>
           </div>
         </div>
       </div>

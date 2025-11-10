@@ -3,9 +3,7 @@ import FeedbacksClient from "@/components/FeedbacksClient";
 
 export default function Page() {
   return (
-    <AuthGuard allowedRoles={["admin"]}>
-      <FeedbacksClient />
-    </AuthGuard>
+    <FeedbacksClient />
   );
 }
 

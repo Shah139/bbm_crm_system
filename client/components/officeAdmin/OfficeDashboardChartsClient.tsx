@@ -42,7 +42,7 @@ export default function OfficeDashboardChartsClient({ visitorTrendData }: Office
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
-        <h2 className="text-xl font-bold text-slate-900 mb-8">Accuracy Trend</h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-8">Performence Trend</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={visitorTrendData as any}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />

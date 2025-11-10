@@ -75,6 +75,39 @@ export default function OfficeDashboardClient() {
     load();
   }, []);
 
+  useEffect(() => {
+    let timer: any;
+
+    const fetchTodayStats = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) return;
+        const ts = Date.now();
+        const res = await fetch(`${baseUrl}/api/user/office-admin/today-stats?ts=${ts}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+        if (!res.ok) return;
+        const js = await res.json();
+        setAdminToday(Number(js.adminToday || 0));
+        setRatioPercent(Number(js.ratioPercent || 0));
+      } catch {}
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchTodayStats();
+    };
+    const handleFocus = () => fetchTodayStats();
+
+    fetchTodayStats();
+    timer = setInterval(fetchTodayStats, 15000);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      if (timer) clearInterval(timer);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
   const { totalVisitors, avgAccuracy, avgPerformance, visitorTrendData } = useMemo(() => {
 
     const base = startOfDay(new Date());

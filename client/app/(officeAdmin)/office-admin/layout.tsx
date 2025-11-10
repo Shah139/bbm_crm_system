@@ -1,9 +1,10 @@
-﻿import Navbar from "@/components/Navbar";
+import Navbar from "@/components/Navbar";
 import OfficeMenu from "@/components/officeAdmin/OfficeMenu";
 import OfficeNavbar from "@/components/officeAdmin/OfficeNavbar";
 import { MenuProvider as OfficeMenuProvider } from "@/components/officeAdmin/OfficeMenuContext";
 import { MenuProvider as AdminMenuProvider } from "@/components/MenuContext";
 import AuthGuard from "@/components/AuthGuard";
+import PageTransition from "@/components/PageTransition";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,13 +24,19 @@ export default function DashboardLayout({
               </div>
               <div className="w-[92%] lg:w-[84%] xl:w-[86%] bg-white overflow-scroll flex flex-col">
                 <Navbar />
-                {children}
+                <PageTransition>
+                  {children}
+                </PageTransition>
               </div>
             </div>
             <div className="md:hidden relative">
               <OfficeMenu />
               <OfficeNavbar />
-              <div className="bg-white">{children}</div>
+              <div className="bg-white">
+                <PageTransition>
+                  {children}
+                </PageTransition>
+              </div>
             </div>
           </div>
         </OfficeMenuProvider>

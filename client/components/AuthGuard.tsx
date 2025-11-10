@@ -236,7 +236,7 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
     };
     checkAuth();
 
-  }, [router, allowedRoles, pathname]);
+  }, [router, allowedRoles]);
 
   if (checking) {
     return (

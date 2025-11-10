@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
@@ -116,8 +116,8 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
   const stats = useMemo(() => {
     const feedbackReceived = todayEntries.filter((e) => e.feedbackStatus === "Received").length;
     const totalEntries = todayEntries.length;
-    const avgPerformance = Math.floor(Math.random() * 30) + 70;
-    return { todayEntries: totalEntries, feedbackReceived, performance: avgPerformance };
+    const performancePercent = totalEntries > 0 ? Math.round((feedbackReceived / totalEntries) * 100) : 0;
+    return { todayEntries: totalEntries, feedbackReceived, performance: performancePercent };
   }, [todayEntries]);
 
   return (

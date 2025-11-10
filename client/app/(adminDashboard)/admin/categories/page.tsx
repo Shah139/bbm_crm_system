@@ -9,9 +9,7 @@ interface Category {
 
 export default function Page() {
   return (
-    <AuthGuard allowedRoles={["admin"]}>
       <CategoryManagementClient />
-    </AuthGuard>
   );
 }
 
