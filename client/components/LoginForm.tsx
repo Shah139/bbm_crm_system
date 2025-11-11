@@ -156,16 +156,6 @@ export default function LoginForm() {
           )}
         </button>
       </form>
-
-      <div className="text-center mt-6">
-        <a
-          href="#"
-          onClick={handleForgotPassword}
-          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition"
-        >
-          Forgot Password?
-        </a>
-      </div>
     </div>
   )
 }

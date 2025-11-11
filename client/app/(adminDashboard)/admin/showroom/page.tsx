@@ -188,7 +188,7 @@ export default function ShowroomActivityPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'visitors' | 'accuracy' | 'name')}
-                className="w-full px-4 py-2 border texxt-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition"
+                className="w-full px-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition"
               >
                 <option value="visitors">Sort by: Daily Visitors</option>
                 <option value="accuracy">Sort by: Accuracy</option>
@@ -297,7 +297,7 @@ export default function ShowroomActivityPage() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           { }
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4">Highest Accuracy</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">Highest Performance</h3>
             {showroomData.length > 0 && (
               <div>
                 <p className="text-lg font-bold text-gray-900">
