@@ -4,28 +4,53 @@ import { Feedback } from "../models/feedbackModel.js";
 import { Showroom } from "../models/showroomModel.js";
 import { Sale } from "../models/salesModel.js";
 
-const startOfDay = (d) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
+// Fixed timezone for analytics: GMT+6 (Asia/Dhaka)
+const TZ_OFFSET_MIN = 6 * 60; // +06:00
 
-const addDays = (d, n) => {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-};
+// Given a Date (or timestamp), compute the UTC start/end for that local (GMT+6) day
+function getUtcRangeForLocalDay(refDate) {
+  const now = new Date(refDate);
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000; // to UTC ms
+  const localMs = utcMs + TZ_OFFSET_MIN * 60000; // shift to GMT+6 local ms
+  const local = new Date(localMs);
+  const y = local.getFullYear();
+  const m = local.getMonth();
+  const d = local.getDate();
+  const startUtc = new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000);
+  const endUtc = new Date(Date.UTC(y, m, d + 1, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000);
+  return { startUtc, endUtc };
+}
 
+// Parse YYYY-MM-DD (local GMT+6 calendar) to UTC day range
+function parseLocalDateRange(str) {
+  const parts = String(str).split("-");
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const d = parseInt(parts[2], 10);
+  if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+    const startLocalUtc = Date.UTC(y, m - 1, d, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000;
+    const endLocalUtc = Date.UTC(y, m - 1, d + 1, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000;
+    return { startUtc: new Date(startLocalUtc), endUtc: new Date(endLocalUtc) };
+  }
+  return getUtcRangeForLocalDay(str);
+}
+
+// Build analytics range in UTC that aligns to GMT+6 local days
 const parseRange = (q) => {
-  const now = new Date();
+  const now = Date.now();
+  const endStr = q?.end || q?.to;
+  const startStr = q?.start || q?.from;
 
-  const endDate = q?.end || q?.to;
-  const startDate = q?.start || q?.from;
+  if (endStr || startStr) {
+    const endRange = endStr ? parseLocalDateRange(endStr) : getUtcRangeForLocalDay(now);
+    const startRange = startStr ? parseLocalDateRange(startStr) : getUtcRangeForLocalDay(now - 29 * 24 * 3600 * 1000);
+    return { start: startRange.startUtc, end: endRange.endUtc };
+  }
 
-  const end = endDate ? new Date(endDate) : addDays(startOfDay(now), 1);
-  const start = startDate ? new Date(startDate) : addDays(startOfDay(now), -29);
-
-  return { start, end };
+  // Default: last 30 local days ending today (inclusive)
+  const today = getUtcRangeForLocalDay(now);
+  const start30 = getUtcRangeForLocalDay(now - 29 * 24 * 3600 * 1000);
+  return { start: start30.startUtc, end: today.endUtc };
 };
 
 const escapeRegex = (s = "") => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -94,11 +119,15 @@ export const showroomSummary = async (req, res) => {
     );
 
     const nowMs = Date.now();
-    // Compute per-showroom day-over-day performance (today vs yesterday)
-    const todayStart = startOfDay(addDays(end, -1));
-    const todayEnd = end;
-    const yStart = startOfDay(addDays(end, -2));
-    const yEnd = todayStart;
+    // Compute per-showroom day-over-day performance (today vs yesterday) using GMT+6
+    // Anchor on the provided 'end' (end-exclusive UTC) to derive the local day that ends at 'end'
+    const endRef = new Date(end.getTime() - 1);
+    const todayLocal = getUtcRangeForLocalDay(endRef);
+    const todayStart = todayLocal.startUtc;
+    const todayEnd = todayLocal.endUtc;
+    const yLocal = getUtcRangeForLocalDay(new Date(todayStart.getTime() - 1));
+    const yStart = yLocal.startUtc;
+    const yEnd = yLocal.endUtc;
 
     const matchToday = { createdAt: { $gte: todayStart, $lt: todayEnd } };
     const matchYest = { createdAt: { $gte: yStart, $lt: yEnd } };
@@ -253,7 +282,7 @@ export const showroomDaily = async (req, res) => {
       { $match: matchRange },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+06:00" } },
           uniquePhones: { $addToSet: "$phoneNumber" },
         },
       },
@@ -270,7 +299,7 @@ export const showroomDaily = async (req, res) => {
       { $match: matchFb },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+06:00" } },
           uniquePhones: { $addToSet: "$phone" },
         },
       },
@@ -286,7 +315,7 @@ export const showroomDaily = async (req, res) => {
       { $match: matchSales },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+06:00" } },
           totalAmount: { $sum: "$amount" },
         },
       },

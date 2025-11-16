@@ -8,6 +8,41 @@ const yyyymmdd = (d) => {
   return iso.slice(0, 10);
 };
 
+// Fixed timezone for showroom stats: GMT+6 (Asia/Dhaka)
+const TZ_OFFSET_MIN = 6 * 60; // +06:00
+
+// Given a Date (or timestamp), compute the UTC start/end that correspond to
+// the local (GMT+6) calendar day boundaries 00:00 to next 00:00
+function getUtcRangeForLocalDay(refDate) {
+  const now = new Date(refDate);
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000; // to UTC ms
+  const localMs = utcMs + TZ_OFFSET_MIN * 60000; // shift to GMT+6 local ms
+  const local = new Date(localMs);
+  const y = local.getFullYear();
+  const m = local.getMonth();
+  const d = local.getDate();
+  // Build UTC moments that align with local midnight boundaries
+  const startUtc = new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000);
+  const endUtc = new Date(Date.UTC(y, m, d + 1, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000);
+  return { startUtc, endUtc, localY: y, localM: m + 1, localD: d };
+}
+
+// Parse YYYY-MM-DD as a date in GMT+6 local time, then return the UTC range
+// that covers that entire local day.
+function parseLocalDateRange(str) {
+  const parts = String(str).split("-");
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const d = parseInt(parts[2], 10);
+  if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+    const startLocalUtc = Date.UTC(y, m - 1, d, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000;
+    const endLocalUtc = Date.UTC(y, m - 1, d + 1, 0, 0, 0, 0) - TZ_OFFSET_MIN * 60000;
+    return { startUtc: new Date(startLocalUtc), endUtc: new Date(endLocalUtc) };
+  }
+  // Fallback: treat as reference date
+  return getUtcRangeForLocalDay(str);
+}
+
 // Public (authenticated) range stats for showroom users: returns days with ratioPercent
 export const getShowroomRangeStatsPublic = async (req, res) => {
   try {
@@ -15,18 +50,11 @@ export const getShowroomRangeStatsPublic = async (req, res) => {
     const toStr = (req.query.to || fromStr).toString();
     const showroom = (req.query.showroom || "").toString();
 
-    // parse YYYY-MM-DD as LOCAL midnight to avoid UTC shift
-    const parseLocal = (s) => {
-      const parts = String(s).split('-');
-      const y = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-      const d = parseInt(parts[2], 10);
-      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) return new Date(y, m - 1, d, 0, 0, 0, 0);
-      const f = new Date(s); f.setHours(0,0,0,0); return f;
-    };
-    const from = parseLocal(fromStr);
-    const toExclusive = new Date(parseLocal(toStr));
-    toExclusive.setDate(toExclusive.getDate() + 1);
+    // Interpret date strings in GMT+6 and convert to UTC boundaries
+    const fromRange = parseLocalDateRange(fromStr);
+    const toRange = parseLocalDateRange(toStr);
+    const from = fromRange.startUtc;
+    const toExclusive = toRange.endUtc;
 
     // Aggregate showroom customers per day (unique phones), optional showroom filter
     const matchShowroom = { createdAt: { $gte: from, $lt: toExclusive } };
@@ -35,7 +63,7 @@ export const getShowroomRangeStatsPublic = async (req, res) => {
       { $match: matchShowroom },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+06:00" } },
           uniquePhones: { $addToSet: "$phoneNumber" },
         },
       },
@@ -64,18 +92,20 @@ export const getShowroomRangeStatsPublic = async (req, res) => {
       byDate.set(key, prev);
     }
 
-    // Fill missing days in range
+    // Fill missing days in range (iterate local days in GMT+6)
     const cursor = new Date(from);
     const end = new Date(toExclusive);
     const days = [];
     while (cursor < end) {
-      const key = yyyymmdd(cursor);
+      // Build key in GMT+6
+      const shifted = new Date(cursor.getTime() + TZ_OFFSET_MIN * 60000);
+      const key = shifted.toISOString().slice(0, 10);
       const row = byDate.get(key) || { date: key, showroom: 0, admin: 0, ratioPercent: 0 };
       const admin = Number(row.admin || 0);
       const showroomCount = Number(row.showroom || 0);
       row.ratioPercent = admin > 0 ? Math.round((showroomCount / admin) * 100) : 0;
       days.push(row);
-      cursor.setDate(cursor.getDate() + 1);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     return res.status(200).json({ from: fromStr, to: toStr, showroom, days });
@@ -88,10 +118,8 @@ export const getShowroomRangeStatsPublic = async (req, res) => {
 // Computes today's showroom unique visitors vs admin-entered counts (summed across all office admins)
 export const getShowroomTodayStatsPublic = async (req, res) => {
   try {
-    const from = new Date();
-    from.setHours(0, 0, 0, 0);
-    const toExclusive = new Date(from);
-    toExclusive.setDate(toExclusive.getDate() + 1);
+    // Compute today boundaries for GMT+6
+    const { startUtc: from, endUtc: toExclusive } = getUtcRangeForLocalDay(Date.now());
 
     const showroom = (req.query.showroom || "").toString();
 
@@ -116,7 +144,9 @@ export const getShowroomTodayStatsPublic = async (req, res) => {
     ]);
 
     // Sum admin-entered counts across all office admins for today, optionally filter by showroom
-    const adminFind = { date: from.toISOString().slice(0, 10) };
+    // Build date string for today in GMT+6
+    const localKey = new Date(from.getTime() + TZ_OFFSET_MIN * 60000).toISOString().slice(0, 10);
+    const adminFind = { date: localKey };
     if (showroom) adminFind.showroom = showroom;
     const adminDocs = await OfficeAdminDaily.find(adminFind).select("showroom count");
 

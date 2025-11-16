@@ -46,7 +46,7 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
   const [allReminders, setAllReminders] = useState<Array<{ id: string; name: string; showroom?: string; date: string }>>([]);
   const [dismissedReminders, setDismissedReminders] = useState<Set<string>>(new Set());
   const [rangePreset, setRangePreset] = useState<'day' | 'week' | 'lastMonth' | 'thisMonth' | 'custom'>('day');
-  const localToday = (() => { const d = new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; })();
+  const localToday = (() => { const d = new Date(); const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${dd}`; })();
   const [fromDate, setFromDate] = useState<string>(localToday);
   const [toDate, setToDate] = useState<string>(localToday);
   const [chartDays, setChartDays] = useState<Array<{ date: string; ratioPercent: number }>>([]);
@@ -70,13 +70,13 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
         const arr = JSON.parse(raw);
         if (Array.isArray(arr)) setDismissedReminders(new Set<string>(arr as string[]));
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const saveDismissed = (next: Set<string>) => {
     try {
       if (typeof window !== 'undefined') localStorage.setItem('dismissed_reminders', JSON.stringify(Array.from(next)));
-    } catch {}
+    } catch { }
   };
 
   const dismissReminder = (id: string) => {
@@ -193,7 +193,7 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
         const names: string[] = Array.isArray(js) ? js.map((s: any) => s.name) : (js.showrooms || []).map((s: any) => s.name);
         setShowrooms(names);
         // keep selectedShowroom as empty to represent 'All Showrooms' by default
-      } catch {}
+      } catch { }
     };
     loadShowrooms();
   }, [baseUrl]);
@@ -237,7 +237,7 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
           if (typeof js.ratioPercent === 'number') setOaAccuracy(Math.round(Number(js.ratioPercent)));
           if (typeof js.adminToday === 'number') setOaAdminCount(Number(js.adminToday));
         }
-      } catch {}
+      } catch { }
     };
     loadTodayStats();
   }, [selectedShowroom, baseUrl]);
@@ -285,7 +285,7 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
         const js = await res.json();
         const days: Array<{ date: string; ratioPercent: number }> = (js.days || []).map((d: any) => ({ date: String(d.date), ratioPercent: Number(d.ratioPercent || 0) }));
         setChartDays(days);
-      } catch {}
+      } catch { }
     };
     loadRange();
   }, [rangePreset, fromDate, toDate, selectedShowroom, baseUrl, computePresetRange]);
@@ -319,82 +319,82 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-10">
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300 overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">আজকের এন্ট্রি</p>
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   <p className="text-5xl font-bold text-slate-900">{stats.todayEntries}</p>
                   <span className="text-xs text-slate-400">কাস্টমার ভিজিট</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-4">এখনই হালনাগাদ</p>
               </div>
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-                <Users className="w-8 h-8 text-blue-600" />
+              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300 overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">প্রাপ্ত ফিডব্যাক</p>
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   <p className="text-5xl font-bold text-emerald-600">{stats.feedbackReceived}</p>
                   <span className="text-xs text-slate-400">{stats.todayEntries > 0 ? Math.round((stats.feedbackReceived / stats.todayEntries) * 100) : 0}%</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-4">মোট কাস্টমারের মধ্যে</p>
               </div>
-              <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl">
-                <MessageSquare className="w-8 h-8 text-emerald-600" />
+              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl">
+                <MessageSquare className="w-6 h-6 text-emerald-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300 overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">নির্ভুলতা</p>
-                <div className="flex items-baseline gap-3">
-                  <p className="text-5xl font-bold text-purple-600">{stats.accuracy}%</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-4xl font-bold text-purple-600">{stats.accuracy}%</p>
                 </div>
-                <div className="mt-4 w-full bg-slate-200 rounded-full h-2">
-                  <div className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-purple-600" style={{ width: `${stats.accuracy}%` }} />
+                <div className="mt-4 w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-purple-600" style={{ width: `${Math.min(stats.accuracy, 100)}%` }} />
                 </div>
               </div>
-              <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
-                <TrendingUp className="w-8 h-8 text-purple-600" />
+              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300 overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">অফিস-অ্যাডমিন ইনপুট</p>
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   <p className="text-5xl font-bold text-emerald-600">{oaAdminCount}</p>
                   <span className="text-xs text-slate-400">আজ</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-4">{selectedShowroom ? `${selectedShowroom} এর জন্য` : 'সব শোরুম'}</p>
+                <p className="text-xs text-slate-400 mt-4 truncate">{selectedShowroom ? `${selectedShowroom} এর জন্য` : 'সব শোরুম'}</p>
               </div>
-              <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl">
-                <Users className="w-8 h-8 text-emerald-600" />
+              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl">
+                <Users className="w-6 h-6 text-emerald-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300 overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">আজকের রিমাইন্ডার</p>
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   <p className="text-5xl font-bold text-amber-600">{remindersDue.length}</p>
                   <span className="text-xs text-slate-400">বাকি</span>
                 </div>
                 {remindersDue.length > 0 && (
                   <ul className="mt-4 space-y-2 max-h-32 overflow-auto">
-                    {remindersDue.slice(0,5).map((r: { id: string; name: string; showroom?: string; date: string }) => (
+                    {remindersDue.slice(0, 5).map((r: { id: string; name: string; showroom?: string; date: string }) => (
                       <li key={r.id} className="flex items-center justify-between text-sm">
                         <span className="font-semibold text-slate-800 truncate mr-3">{r.name}</span>
                         <button type="button" onClick={() => dismissReminder(r.id)} className="px-2 py-1 text-xs rounded border border-slate-300 hover:bg-slate-100" title="রিমাইন্ডার বাতিল করুন">ডিসমিস</button>
