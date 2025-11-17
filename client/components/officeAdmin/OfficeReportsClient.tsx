@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useId } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Calendar, Download, FileText, Filter } from 'lucide-react';
 import Toast from '@/components/Toast';
 
@@ -191,12 +191,17 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
         performance: 0,
         sales: 0,
       })) : [];
-      // Compute performance as ratio today/yesterday * 100 (Option B)
+      // Compute performance using Option A: (today visitors - yesterday visitors) / yesterday visitors * 100
+      // If yesterday is 0, fall back to (today - yesterday) * 100
       for (let i = 0; i < baseDays.length; i++) {
         if (i === 0) { baseDays[i].performance = 0; continue; }
         const today = Number(baseDays[i].visitors || 0);
         const yesterday = Number(baseDays[i - 1].visitors || 0);
-        baseDays[i].performance = yesterday > 0 ? Math.round((today / yesterday) * 100) : 0;
+        if (yesterday > 0) {
+          baseDays[i].performance = Math.round(((today - yesterday) / yesterday) * 100);
+        } else {
+          baseDays[i].performance = Math.round((today - yesterday) * 100);
+        }
       }
       const daysPayload: ChartData[] = baseDays;
 
@@ -535,7 +540,10 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
                 <BarChart data={reversedChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                   <XAxis dataKey="day" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" />
+                  <YAxis
+                    stroke="#94a3b8"
+                    domain={[(dataMin: number) => Math.min(dataMin, 0), (dataMax: number) => Math.max(dataMax, 0)]}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#f8fafc',
@@ -543,7 +551,14 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
                       borderRadius: '8px',
                     }}
                   />
-                  <Bar dataKey="performance" fill="#10b981" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="performance" radius={[8, 8, 0, 0]}>
+                    {reversedChartData.map((entry, index) => (
+                      <Cell
+                        key={`perf-cell-${index}`}
+                        fill={Number(entry.performance) < 0 ? '#ef4444' : '#10b981'}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

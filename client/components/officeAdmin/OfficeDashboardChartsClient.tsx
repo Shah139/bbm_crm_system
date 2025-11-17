@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar } from "recharts";
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar, Cell } from "recharts";
 
 export interface VisitorTrendData { day: string; visitors: number; accuracy: number; performance: number }
 
@@ -47,7 +47,10 @@ export default function OfficeDashboardChartsClient({ visitorTrendData }: Office
           <BarChart data={visitorTrendData as any}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
             <XAxis dataKey="day" stroke="#94a3b8" />
-            <YAxis stroke="#94a3b8" />
+            <YAxis
+              stroke="#94a3b8"
+              domain={[(dataMin: number) => Math.min(dataMin, 0), (dataMax: number) => Math.max(dataMax, 0)]}
+            />
             <Tooltip
               contentStyle={{
                 backgroundColor: '#f8fafc',
@@ -57,7 +60,14 @@ export default function OfficeDashboardChartsClient({ visitorTrendData }: Office
               }}
               labelStyle={{ color: '#0f172a' }}
             />
-            <Bar dataKey="performance" fill="#10b981" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="performance" radius={[8, 8, 0, 0]}>
+              {(visitorTrendData as any).map((entry: any, index: number) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={Number(entry.performance) < 0 ? "#ef4444" : "#10b981"}
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

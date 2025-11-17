@@ -67,12 +67,14 @@ export const showroomSummary = async (req, res) => {
           _id: "$showroomBranch",
           uniquePhones: { $addToSet: "$phoneNumber" },
           lastActivity: { $max: "$createdAt" },
+          totalEntries: { $sum: 1 },
         },
       },
       {
         $project: {
           showroom: "$_id",
           uniqueCustomers: { $size: "$uniquePhones" },
+          totalEntries: 1,
           lastActivity: 1,
           _id: 0,
         },
@@ -155,7 +157,14 @@ export const showroomSummary = async (req, res) => {
         const status = r.lastActivity && nowMs - new Date(r.lastActivity).getTime() < 24 * 3600 * 1000 ? "Active" : "Inactive";
         const t = todayMap.get(r.showroom || "") || 0;
         const y = yMap.get(r.showroom || "") || 0;
-        const performance = y > 0 ? Math.round((t / y) * 100) : 0;
+        // Performance (Option A): (today - yesterday) / yesterday * 100
+        // If yesterday is 0, fall back to (today - yesterday) * 100
+        let performance = 0;
+        if (y > 0) {
+          performance = Math.round(((t - y) / y) * 100);
+        } else {
+          performance = Math.round((t - y) * 100);
+        }
         return { ...r, accuracy: acc, performance, status };
       });
 
@@ -257,8 +266,48 @@ export const showroomReport = async (req, res) => {
       byKey.set(`${f.showroom}||${f.category || ""}`, prev);
     }
 
-    const rows = Array.from(byKey.values()).filter((r) => activeSet.size === 0 || activeSet.has(r.showroom || ""));
+    const baseRows = Array.from(byKey.values()).filter((r) => activeSet.size === 0 || activeSet.has(r.showroom || ""));
 
+    const endRef = new Date(end.getTime() - 1);
+    const todayLocal = getUtcRangeForLocalDay(endRef);
+    const todayStart = todayLocal.startUtc;
+    const todayEnd = todayLocal.endUtc;
+    const yLocal = getUtcRangeForLocalDay(new Date(todayStart.getTime() - 1));
+    const yStart = yLocal.startUtc;
+    const yEnd = yLocal.endUtc;
+
+    const matchToday = { createdAt: { $gte: todayStart, $lt: todayEnd } };
+    const matchYest = { createdAt: { $gte: yStart, $lt: yEnd } };
+
+    const [todayAgg, yestAgg] = await Promise.all([
+      ShowroomCustomer.aggregate([
+        { $match: matchToday },
+        { $group: { _id: "$showroomBranch", uniquePhones: { $addToSet: "$phoneNumber" } } },
+        { $project: { showroom: "$_id", todayCount: { $size: "$uniquePhones" }, _id: 0 } },
+      ]),
+      ShowroomCustomer.aggregate([
+        { $match: matchYest },
+        { $group: { _id: "$showroomBranch", uniquePhones: { $addToSet: "$phoneNumber" } } },
+        { $project: { showroom: "$_id", yCount: { $size: "$uniquePhones" }, _id: 0 } },
+      ]),
+    ]);
+
+    const todayMap = new Map(todayAgg.map((r) => [String(r.showroom || ""), Number(r.todayCount || 0)]));
+    const yMap = new Map(yestAgg.map((r) => [String(r.showroom || ""), Number(r.yCount || 0)]));
+
+    const rows = baseRows.map((r) => {
+      const t = todayMap.get(r.showroom || "") || 0;
+      const y = yMap.get(r.showroom || "") || 0;
+      // Performance (Option A): (today - yesterday) / yesterday * 100
+      // If yesterday is 0, fall back to (today - yesterday) * 100
+      let performance = 0;
+      if (y > 0) {
+        performance = Math.round(((t - y) / y) * 100);
+      } else {
+        performance = Math.round((t - y) * 100);
+      }
+      return { ...r, performance };
+    });
 
     res.set("Cache-Control", "private, max-age=30");
     return res.status(200).json({ rows, from: start, to: end });
@@ -349,13 +398,18 @@ export const showroomDaily = async (req, res) => {
       };
     });
 
-    // Compute performance per day as ratio today/yesterday * 100 (Option B)
+    // Compute performance per day using Option A: (today - yesterday) / yesterday * 100
+    // If yesterday is 0, fall back to (today - yesterday) * 100
     days.sort((a, b) => a.day.localeCompare(b.day));
     for (let i = 0; i < days.length; i++) {
       if (i === 0) { days[i].performance = 0; continue; }
       const todayV = Number(days[i].visitors || 0);
       const yV = Number(days[i - 1].visitors || 0);
-      days[i].performance = yV > 0 ? Math.round((todayV / yV) * 100) : 0;
+      if (yV > 0) {
+        days[i].performance = Math.round(((todayV - yV) / yV) * 100);
+      } else {
+        days[i].performance = Math.round((todayV - yV) * 100);
+      }
     }
 
     const totalVisitors = days.reduce((sum, d) => sum + d.visitors, 0);

@@ -9,6 +9,7 @@ interface ShowroomActivity {
   showroomName: string;
   dailyVisitors: number;
   accuracy: number;
+  performance: number;
   lastActivity: Date;
   status: 'Active' | 'Inactive';
 }
@@ -41,6 +42,7 @@ export default function ShowroomActivityPage() {
   const [sortBy, setSortBy] = useState<'visitors' | 'accuracy' | 'name'>('visitors');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [totalCustomers, setTotalCustomers] = useState<number>(0);
 
   useEffect(() => {
     const load = async () => {
@@ -49,21 +51,43 @@ export default function ShowroomActivityPage() {
         if (!token) throw new Error('Not authenticated');
         const params = new URLSearchParams();
         params.set('ts', String(Date.now()));
-        const res = await fetch(`${baseUrl}/api/user/analytics/showroom-summary?${params.toString()}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store',
-        });
-        if (!res.ok) throw new Error('Failed to load');
-        const data = await res.json();
-        const items = Array.isArray(data.items) ? data.items : [];
-        const mapped: ShowroomActivity[] = items.map((it: any, idx: number) => ({
+        const [custRes, summaryRes] = await Promise.all([
+          fetch(`${baseUrl}/api/user/showroom/customers?limit=10000&ts=${params.get('ts')}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
+            cache: 'no-store',
+          }),
+          fetch(`${baseUrl}/api/user/analytics/showroom-summary?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+          }),
+        ]);
+
+        if (!custRes.ok) throw new Error('Failed to load customers');
+        if (!summaryRes.ok) throw new Error('Failed to load showroom summary');
+
+        const [custData, summaryData] = await Promise.all([
+          custRes.json(),
+          summaryRes.json(),
+        ]);
+
+        const customers = Array.isArray(custData.customers) ? custData.customers : [];
+        setTotalCustomers(customers.length);
+
+        const items = Array.isArray(summaryData.items) ? summaryData.items : [];
+
+        const mapped: ShowroomActivity[] = items.map((it: any, idx: number) => {
+          const showroomName = it.showroom || 'Unknown';
+          return {
           id: idx + 1,
-          showroomName: it.showroom || 'Unknown',
+          showroomName,
           dailyVisitors: Number(it.uniqueCustomers || 0),
           accuracy: Number(it.accuracy || 0),
+          performance: Number(it.performance || 0),
           lastActivity: it.lastActivity ? new Date(it.lastActivity) : new Date(0),
           status: (it.status === 'Active' ? 'Active' : 'Inactive') as 'Active' | 'Inactive',
-        }));
+        };
+        });
         setShowroomData(mapped);
       } catch (e: any) {
         setToastMessage(e?.message || 'Failed to load showroom summary');
@@ -94,14 +118,14 @@ export default function ShowroomActivityPage() {
   }, [showroomData, searchQuery, sortBy]);
 
   const stats = useMemo(() => {
-    const totalVisitors = showroomData.reduce((sum, s) => sum + s.dailyVisitors, 0);
+    const totalVisitors = totalCustomers;
     const avgAccuracy = (
-      showroomData.reduce((sum, s) => sum + s.accuracy, 0) / showroomData.length
+      showroomData.reduce((sum, s) => sum + s.performance, 0) / (showroomData.length || 1)
     ).toFixed(1);
     const activeShowrooms = showroomData.filter((s) => s.status === 'Active').length;
 
     return { totalVisitors, avgAccuracy, activeShowrooms };
-  }, [showroomData]);
+  }, [showroomData, totalCustomers]);
 
   const formatLastActivity = (date: Date): string => {
     const now = new Date();
@@ -131,7 +155,7 @@ export default function ShowroomActivityPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-600 mb-1">Total Visitors Today</h3>
+                <h3 className="text-sm font-medium text-gray-600 mb-1">Total Customers</h3>
                 <p className="text-3xl font-bold text-gray-900">{stats.totalVisitors}</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -250,16 +274,16 @@ export default function ShowroomActivityPage() {
                       <td className="px-6 py-4 text-sm">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getAccuracyTextColor(showroom.accuracy)}`}>
-                              {showroom.accuracy}%
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getAccuracyTextColor(showroom.performance)}`}>
+                              {showroom.performance}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
                               className={`h-2 rounded-full transition-all ${getAccuracyColor(
-                                showroom.accuracy
+                                showroom.performance
                               )}`}
-                              style={{ width: `${showroom.accuracy}%` }}
+                              style={{ width: `${Math.max(-100, Math.min(100, showroom.performance))}%` }}
                             />
                           </div>
                         </div>
@@ -301,10 +325,10 @@ export default function ShowroomActivityPage() {
             {showroomData.length > 0 && (
               <div>
                 <p className="text-lg font-bold text-gray-900">
-                  {showroomData.reduce((max, s) => (s.accuracy > max.accuracy ? s : max)).showroomName}
+                  {showroomData.reduce((max, s) => (s.performance > max.performance ? s : max)).showroomName}
                 </p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
-                  {Math.max(...showroomData.map((s) => s.accuracy))}%
+                  {Math.max(...showroomData.map((s) => s.performance))}%
                 </p>
               </div>
             )}

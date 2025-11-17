@@ -51,7 +51,7 @@ const generateColors = (count: number): string[] => {
 
 export default function ReportsClient() {
   const [allData, setAllData] = useState<ReportItem[]>([]);
-  const [dateRange, setDateRange] = useState<'last30' | 'thisMonth' | 'lastMonth'>('last30');
+  const [dateRange, setDateRange] = useState<'last30' | 'thisMonth' | 'lastMonth' | 'yesterday' | 'today'>('last30');
   const [selectedShowroom, setSelectedShowroom] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,9 +78,20 @@ export default function ReportsClient() {
         from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       } else if (dateRange === 'thisMonth') {
         from = new Date(now.getFullYear(), now.getMonth(), 1);
-      } else {
+      } else if (dateRange === 'lastMonth') {
         from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         to = new Date(now.getFullYear(), now.getMonth(), 0);
+      } else if (dateRange === 'yesterday') {
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        from = new Date(yesterday);
+        to = new Date(yesterday);
+      } else { // 'today'
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+        from = new Date(today);
+        to = new Date(today);
       }
       const params = new URLSearchParams();
       params.set('from', from.toISOString().split('T')[0]);
@@ -116,15 +127,25 @@ export default function ReportsClient() {
       const rows: any[] = data.rows;
       const nowDate = new Date();
       console.log('Received rows:', rows); 
-      const mappedAll: ReportItem[] = rows.map((r, idx) => ({
-        id: idx + 1,
-        showroom: r.showroom || 'Unknown',
-        category: (r.category ?? '').toString() || (selectedCategory !== 'all' ? selectedCategory : 'Uncategorized'),
-        customerCount: Number(r.customers || 0),
-        feedbackCount: Number(r.feedbacks || 0),
-        prevMonthPerformance: Number(r.customers || 0) > 0 ? Math.round((Number(r.feedbacks || 0) / Number(r.customers || 1)) * 100) : 0,
-        date: nowDate,
-      }));
+      const mappedAll: ReportItem[] = rows.map((r, idx) => {
+        const customers = Number(r.customers || 0);
+        const feedbacks = Number(r.feedbacks || 0);
+        const rawPerf = typeof r.performance === 'number' ? Number(r.performance) : NaN;
+        // Use backend performance as-is (Option A), only rounding on the frontend
+        const perf = Number.isFinite(rawPerf)
+          ? Math.round(rawPerf)
+          : (customers > 0 ? Math.round((feedbacks / (customers || 1)) * 100) : 0);
+
+        return {
+          id: idx + 1,
+          showroom: r.showroom || 'Unknown',
+          category: (r.category ?? '').toString() || (selectedCategory !== 'all' ? selectedCategory : 'Uncategorized'),
+          customerCount: customers,
+          feedbackCount: feedbacks,
+          prevMonthPerformance: perf,
+          date: nowDate,
+        };
+      });
 
       let currentNames = showrooms;
       try {
@@ -394,10 +415,12 @@ export default function ReportsClient() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2"><Calendar size={16} className="inline mr-2" />Date Range</label>
-              <select value={dateRange} onChange={(e) => setDateRange(e.target.value as 'last30' | 'thisMonth' | 'lastMonth')} className="w-full px-3 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <select value={dateRange} onChange={(e) => setDateRange(e.target.value as 'last30' | 'thisMonth' | 'lastMonth' | 'yesterday' | 'today')} className="w-full px-3 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="last30">Last 30 Days</option>
                 <option value="thisMonth">This Month</option>
                 <option value="lastMonth">Last Month</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="today">Today</option>
               </select>
             </div>
             <div>

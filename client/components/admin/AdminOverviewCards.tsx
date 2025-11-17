@@ -107,8 +107,19 @@ export default function AdminOverviewCards() {
         const days = Array.isArray(dailyData?.days) ? dailyData.days : [];
         const byDay = new Map<string, any>();
         days.forEach((d: any) => { if (d?.day) byDay.set(String(d.day), d); });
-        const todayKey = new Date().toISOString().slice(0,10);
-        const yKey = (() => { const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); })();
+
+        const localKey = (d: Date) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${dd}`;
+        };
+
+        const todayKey = localKey(new Date());
+        const yd = new Date();
+        yd.setDate(yd.getDate() - 1);
+        const yKey = localKey(yd);
+
         setVisitorsToday(Number(byDay.get(todayKey)?.visitors || 0));
         setVisitorsYesterday(Number(byDay.get(yKey)?.visitors || 0));
       } catch (e: any) {
@@ -158,8 +169,19 @@ export default function AdminOverviewCards() {
           const days = Array.isArray(dailyData?.days) ? dailyData.days : [];
           const byDay = new Map<string, any>();
           days.forEach((d: any) => { if (d?.day) byDay.set(String(d.day), d); });
-          const todayKey = new Date().toISOString().slice(0,10);
-          const yKey = (() => { const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); })();
+
+          const localKey = (d: Date) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${dd}`;
+          };
+
+          const todayKey = localKey(new Date());
+          const yd = new Date();
+          yd.setDate(yd.getDate() - 1);
+          const yKey = localKey(yd);
+
           setVisitorsToday(Number(byDay.get(todayKey)?.visitors || 0));
           setVisitorsYesterday(Number(byDay.get(yKey)?.visitors || 0));
         }
@@ -238,8 +260,12 @@ export default function AdminOverviewCards() {
       .map((f) => normalize(f.phone || ''))
       .filter((p) => p && yCustomerPhones.has(p)).length;
 
-    const performancePct = todaysVisitors > 0 ? Math.round((todaysFeedbackMatches / todaysVisitors) * 100) : 0;
-    const yPerformancePct = yVisitors > 0 ? Math.round((yFeedbackMatches / yVisitors) * 100) : 0;
+    // Overall performance: (today customer count - yesterday customer count) / yesterday customer count * 100
+    // If yesterday is 0, fall back to (today - yesterday) * 100
+    const performancePct = yVisitors > 0
+      ? Math.round(((todaysVisitors - yVisitors) / yVisitors) * 100)
+      : Math.round((todaysVisitors - yVisitors) * 100);
+    const yPerformancePct = 0;
 
     const pctChange = (cur: number, prev: number) => {
       if (prev === 0) {
@@ -250,7 +276,7 @@ export default function AdminOverviewCards() {
     };
 
     const visitorsChange = pctChange(todaysVisitors, yVisitors);
-    const perfDelta = performancePct - yPerformancePct; // show delta in percentage points
+    const perfDelta = performancePct - yPerformancePct; // currently equals performancePct since yPerformancePct is 0
 
     const cumulativeYesterday = customers.filter((c) => inRange(c.createdAt, new Date(0), yEnd)).length;
     const cumulativeToday = totalCustomers; // equals customers.length (all fetched)

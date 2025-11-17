@@ -36,6 +36,7 @@ export default function OfficeDashboardClient() {
   const [summary, setSummary] = useState<any[]>([]);
   const [avgAccBackend, setAvgAccBackend] = useState<number | null>(null);
   const [avgPerfBackend, setAvgPerfBackend] = useState<number | null>(null);
+  const [visitorsToday, setVisitorsToday] = useState<number>(0);
   const [adminToday, setAdminToday] = useState<number>(0);
   const [ratioPercent, setRatioPercent] = useState<number>(0);
   const [openAdminCountModal, setOpenAdminCountModal] = useState(false);
@@ -76,6 +77,7 @@ export default function OfficeDashboardClient() {
         setSummary(items);
         if (typeof sData.avgAccuracy === 'number') setAvgAccBackend(sData.avgAccuracy);
         if (typeof sData.avgPerformance === 'number') setAvgPerfBackend(sData.avgPerformance);
+        setVisitorsToday(Number(todayStats.visitorsToday || 0));
         setAdminToday(Number(todayStats.adminToday || 0));
         setRatioPercent(Number(todayStats.ratioPercent || 0));
         // Derive adminBreakdown from accuracyBreakdown if not provided
@@ -103,6 +105,7 @@ export default function OfficeDashboardClient() {
         const res = await fetch(`${baseUrl}/api/user/showroom/today-stats?ts=${ts}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
         if (!res.ok) return;
         const js = await res.json();
+        setVisitorsToday(Number(js.visitorsToday || 0));
         setAdminToday(Number(js.adminToday || 0));
         setRatioPercent(Number(js.ratioPercent || 0));
         const abList: any[] = Array.isArray(js.accuracyBreakdown) ? js.accuracyBreakdown : [];
@@ -170,15 +173,18 @@ export default function OfficeDashboardClient() {
       return { day: c.day, visitors: c.visitors, accuracy: acc, performance: 0 };
     });
 
-    // Compute performance as ratio today/yesterday * 100 (Option B)
+    // Compute daily performance using Option A: (today - yesterday) / yesterday * 100
+    // If yesterday is 0, fall back to (today - yesterday) * 100
     for (let i = 0; i < trend.length; i++) {
       if (i === 0) { trend[i].performance = 0; continue; }
-      const today = Number(trend[i].visitors || 0);
-      const yesterday = Number(trend[i - 1].visitors || 0);
-      trend[i].performance = yesterday > 0 ? Math.round((today / yesterday) * 100) : 0;
+      const todayVisitors = Number(trend[i].visitors || 0);
+      const yesterdayVisitors = Number(trend[i - 1].visitors || 0);
+      if (yesterdayVisitors > 0) {
+        trend[i].performance = Math.round(((todayVisitors - yesterdayVisitors) / yesterdayVisitors) * 100);
+      } else {
+        trend[i].performance = Math.round((todayVisitors - yesterdayVisitors) * 100);
+      }
     }
-
-    const todayVisitors = counts[counts.length - 1]?.visitors || 0;
 
     const accuracyVals = trend.map(t => t.accuracy);
     const avgAccClient = accuracyVals.length ? (accuracyVals.reduce((a, b) => a + b, 0) / accuracyVals.length) : 0;
@@ -188,7 +194,7 @@ export default function OfficeDashboardClient() {
 
     const acc = (avgAccBackend ?? avgAccClient).toFixed(1);
     const perf = String(avgPerfBackend ?? avgPerfClient);
-    return { totalVisitors: todayVisitors, avgAccuracy: acc, avgPerformance: perf, visitorTrendData: trend };
+    return { totalVisitors: counts[counts.length - 1]?.visitors || 0, avgAccuracy: acc, avgPerformance: perf, visitorTrendData: trend };
   }, [customers, feedbacks, avgAccBackend, avgPerfBackend]);
 
   const perfByShowroom = useMemo(() => {
@@ -224,8 +230,14 @@ export default function OfficeDashboardClient() {
     keys.forEach((k) => {
       const t = todayMap.get(k)?.size || 0;
       const y = yestMap.get(k)?.size || 0;
-      const denom = y > 0 ? y : 1;
-      const val = t > 0 ? Math.round((t / denom) * 100) : 0;
+      // Match admin/showroom & backend Option A: (today - yesterday) / yesterday * 100
+      // If yesterday is 0, fall back to (today - yesterday) * 100
+      let val = 0;
+      if (y > 0) {
+        val = Math.round(((t - y) / y) * 100);
+      } else {
+        val = Math.round((t - y) * 100);
+      }
       perf.set(k, { t, y, perf: val });
     });
     return perf;
@@ -262,12 +274,13 @@ export default function OfficeDashboardClient() {
 
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+          {/* Total Visitors Today */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Total Visitors Today</p>
                 <div className="flex items-baseline gap-3">
-                  <p className="text-5xl font-bold text-slate-900">{totalVisitors}</p>
+                  <p className="text-5xl font-bold text-slate-900">{visitorsToday}</p>
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg">
                     <span className="text-sm font-semibold text-emerald-600">live</span>
                   </div>
@@ -280,18 +293,23 @@ export default function OfficeDashboardClient() {
             </div>
           </div>
 
+          {/* Admin Customers Today */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Admin Customers Today</p>
-                <div className="flex items-center gap-4">
+                <div className="flex items-baseline gap-3">
+                  <p className="text-3xl font-bold text-slate-900">{adminToday || 0}</p>
                 </div>
                 {adminBreakdown.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1"> {/* Tighter gap */}
+                  <div className="mt-2 flex flex-wrap gap-1">
                     {adminBreakdown.map((b, i) => (
-                      <span key={`${b.showroom}-${i}`} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-xs"> {/* Smaller padding */}
+                      <span
+                        key={`${b.showroom}-${i}`}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-xs"
+                      >
                         <span className="font-semibold text-slate-900">{b.count}</span>
-                        <span className="text-slate-600 max-w-[80px] truncate" title={b.showroom}>{b.showroom}</span> {/* Limit text width */}
+                        <span className="text-slate-600 max-w-[80px] truncate" title={b.showroom}>{b.showroom}</span>
                       </span>
                     ))}
                   </div>
@@ -300,43 +318,47 @@ export default function OfficeDashboardClient() {
             </div>
           </div>
 
+          {/* Data Accuracy */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Data Accuracy</p>
+                <p className="text-xs text-slate-400 mb-3">based on showroom vs admin</p>
+                <div className="flex items-baseline gap-3 mb-3">
+                  <p className="text-3xl font-bold text-slate-900">{ratioPercent || 0}%</p>
+                </div>
 
-<div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300">
-  <div className="flex items-start justify-between">
-    <div className="flex-1">
-      <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Data Accuracy</p>
-      <p className="text-xs text-slate-400 mb-3">based on showroom vs admin</p>
-      
-      {accuracyBreakdown.length > 0 && (
-        <div className="flex flex-wrap gap-0.5">
-          {accuracyBreakdown.map((r, i) => (
-            <span
-              key={`${r.showroom}-${i}`}
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
-                r.accuracyPercent >= 90 
-                  ? 'bg-emerald-50 text-emerald-700' 
-                  : r.accuracyPercent >= 80 
-                  ? 'bg-cyan-50 text-cyan-700'
-                  : r.accuracyPercent >= 70 
-                  ? 'bg-amber-50 text-amber-700'
-                  : 'bg-rose-50 text-rose-700'
-              }`}
-              title={`${r.showroom} • ${r.accuracyPercent}% (Visitors: ${r.visitors} | Admin: ${r.admin})`}
-            >
-              <span className="font-bold">{r.accuracyPercent}%</span>
-              <span className="max-w-[60px] truncate">{r.showroom}</span>
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-    
-    <div className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl ml-4 flex-shrink-0">
-      <BarChart3 className="w-6 h-6 text-emerald-600" />
-    </div>
-  </div>
-</div>
+                {accuracyBreakdown.length > 0 && (
+                  <div className="flex flex-wrap gap-0.5">
+                    {accuracyBreakdown.map((r, i) => (
+                      <span
+                        key={`${r.showroom}-${i}`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
+                          r.accuracyPercent >= 90
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : r.accuracyPercent >= 80
+                            ? 'bg-cyan-50 text-cyan-700'
+                            : r.accuracyPercent >= 70
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-rose-50 text-rose-700'
+                        }`}
+                        title={`${r.showroom} • ${r.accuracyPercent}% (Visitors: ${r.visitors} | Admin: ${r.admin})`}
+                      >
+                        <span className="font-bold">{r.accuracyPercent}%</span>
+                        <span className="max-w-[60px] truncate">{r.showroom}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
 
+              <div className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl ml-4 flex-shrink-0">
+                <BarChart3 className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Avg Performance */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -374,14 +396,20 @@ export default function OfficeDashboardClient() {
                 {summary.map((it, idx) => {
                   const showroomName = it.showroom || it.showroomName || 'Showroom';
                   const visitors = Number(it.uniqueCustomers || it.visitorsToday || 0);
+                  // Accuracy for office-admin table: admin customers today / showroom visitors today * 100
                   const accRow = accuracyBreakdown.find((r) => (r.showroom || '') === (showroomName || ''));
-                  const accuracy = accRow ? Number(accRow.accuracyPercent || 0) : Number(it.accuracy || 0);
+                  const accuracy = accRow ? Number(accRow.accuracyPercent || 0) : 0;
                   const status = (it.status === 'Active' ? 'Active' : 'Active');
                   const perfKey = (showroomName || '').toString().toLowerCase().trim();
                   const perfEntry = perfByShowroom.get(perfKey);
-                  const perfApi = Number(it.performance || 0);
-                  const perfComputed = Number(perfEntry?.perf || 0);
-                  const performance = Math.max(0, Math.min(100, perfApi > 0 ? perfApi : perfComputed));
+                  const perfApiRaw = Number(it.performance);
+                  const perfApi = Number.isFinite(perfApiRaw) ? perfApiRaw : NaN;
+                  const perfComputedRaw = Number(perfEntry?.perf);
+                  const perfComputed = Number.isFinite(perfComputedRaw) ? perfComputedRaw : NaN;
+                  // Prefer backend summary performance (same as admin/showroom), fallback to local computation
+                  const performance = Number.isFinite(perfApi)
+                    ? perfApi
+                    : (Number.isFinite(perfComputed) ? perfComputed : 0);
                   return (
                     <tr key={`${showroomName}-${idx}`} className={`border-b border-slate-100 hover:bg-slate-50 transition ${idx === summary.length - 1 ? 'border-b-0' : ''}`}>
                       <td className="px-8 py-5 text-sm font-semibold text-slate-900">{showroomName}</td>
@@ -397,7 +425,7 @@ export default function OfficeDashboardClient() {
                       <td className="px-8 py-5 text-sm">
                         <div className="flex items-center gap-3">
                           <div className="w-28 bg-slate-200 rounded-full h-2">
-                            <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${performance}%` }} />
+                            <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${Math.max(0, Math.min(100, Math.abs(performance)))}%` }} />
                           </div>
                           <span className="font-semibold text-slate-900 text-xs min-w-[40px]">{performance}%</span>
                         </div>
