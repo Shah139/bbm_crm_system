@@ -11,6 +11,7 @@ const showroomCustomerSchema = new mongoose.Schema(
     notes: { type: String, default: "" },
 
     // newly supported optional fields
+    sellNote: { type: String, default: "" },
     email: { type: String, trim: true, default: "" },
     division: { type: String, trim: true, default: "" },
     upazila: { type: String, trim: true, default: "" },

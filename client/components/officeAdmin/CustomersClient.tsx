@@ -20,6 +20,7 @@ interface Customer {
   businessName?: string;
   quotation?: string;
   rememberDate?: string;
+  sellNote?: string;
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -98,6 +99,7 @@ export default function CustomersClient() {
           businessName: c.businessName || '',
           quotation: c.quotation || '',
           rememberDate: c.rememberDate || '',
+          sellNote: c.sellNote || '',
         }));
 
         // Compute visit count per normalized phone across all loaded customers
@@ -461,6 +463,10 @@ export default function CustomersClient() {
                               <div>
                                 <div className="text-xs font-bold text-slate-500">Reminder Date</div>
                                 <div className="font-medium">{customer.rememberDate ? new Date(customer.rememberDate).toISOString().slice(0, 10) : '-'}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold text-slate-500">Sell Note / Bill No</div>
+                                <div className="font-medium">{customer.sellNote || '-'}</div>
                               </div>
                             </div>
                           </td>

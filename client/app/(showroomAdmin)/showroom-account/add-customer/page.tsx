@@ -23,6 +23,8 @@ interface FormData {
   quotationNumber?: string;
   quotationDate?: string;
   businessName?: string;
+  sellNote?: string;
+  rememberText?: string;
 }
 
 interface SubmitResponse {
@@ -151,6 +153,8 @@ export default function AddCustomerPage() {
     quotationNumber: '',
     quotationDate: '',
     businessName: '',
+    sellNote: '',
+    rememberText: '',
   });
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -163,6 +167,7 @@ export default function AddCustomerPage() {
   const [customerType, setCustomerType] = useState<'individual' | 'business'>('individual');
   const [visitCount, setVisitCount] = useState<number | null>(null);
   const [checkingVisits, setCheckingVisits] = useState(false);
+  const [extraCallNotes, setExtraCallNotes] = useState<string[]>([]);
 
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [toastMessage, setToastMessage] = useState('');
@@ -310,6 +315,17 @@ export default function AddCustomerPage() {
         return;
       }
 
+      // Join main call note, any extra call notes, and reminder note text into a single note string
+      const noteParts: string[] = [];
+      if (formData.notes && formData.notes.trim()) noteParts.push(formData.notes.trim());
+      extraCallNotes.forEach((n) => {
+        if (n && n.trim()) noteParts.push(n.trim());
+      });
+      if (formData.rememberText && formData.rememberText.trim()) {
+        noteParts.push(formData.rememberText.trim());
+      }
+      const finalNoteText = noteParts.join('\n---\n');
+
       const res = await fetch(`${baseUrl}/api/user/showroom/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -322,12 +338,13 @@ export default function AddCustomerPage() {
           division: formData.division,
           upazila: formData.zila,
           interestLevel: formData.interestLevel,
-          note: formData.notes,
+          note: finalNoteText,
           randomCustomer: formData.randomCustomerNote,
           quotation: formData.quotationNumber || formData.quotationDate
             ? `${formData.quotationNumber || ''}${formData.quotationNumber && formData.quotationDate ? ' - ' : ''}${formData.quotationDate || ''}`
             : '',
           rememberNote: formData.rememberNote,
+          sellNote: formData.sellNote,
         }),
       });
       if (!res.ok) {
@@ -355,11 +372,14 @@ export default function AddCustomerPage() {
         quotationNumber: '',
         quotationDate: '',
         businessName: '',
+        sellNote: '',
+        rememberText: '',
       });
       setFormErrors({});
       setSelectedNoteType('');
       setSelectedCommentType('');
       setCustomerType('individual');
+      setExtraCallNotes([]);
     } catch (error: any) {
       setToastMessage(error?.message || 'কাস্টমার সাবমিট করা যায়নি। আবার চেষ্টা করুন।');
       setShowToast(true);
@@ -693,19 +713,62 @@ export default function AddCustomerPage() {
                         <option value="call">কল নোট</option>
                         <option value="random">র‍্যান্ডম কাস্টমার</option>
                         <option value="remember">রিমাইন্ডার নোট</option>
+                        <option value="sell">সেল নোট / বিল নম্বর</option>
                       </select>
                     </div>
 
                     {selectedCommentType === 'call' && (
-                      <div>
-                        <label className="text-sm font-bold text-slate-900 mb-3 block">কল নোট লিখুন</label>
-                        <textarea
-                          name="notes"
-                          value={formData.notes || ''}
-                          onChange={handleInputChange}
-                          placeholder="কল নোট লিখুন"
-                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 min-h-[80px]"
-                        />
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-bold text-slate-900 mb-3 block">কল নোট লিখুন</label>
+                          <textarea
+                            name="notes"
+                            value={formData.notes || ''}
+                            onChange={handleInputChange}
+                            placeholder="কল নোট লিখুন"
+                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 min-h-[80px]"
+                          />
+                        </div>
+
+                        {extraCallNotes.map((note, idx) => (
+                          <div key={idx} className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-700 block">
+                              অতিরিক্ত কল নোট {idx + 1}
+                            </label>
+                            <div className="flex gap-2">
+                              <textarea
+                                value={note}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setExtraCallNotes((prev) => {
+                                    const copy = [...prev];
+                                    copy[idx] = val;
+                                    return copy;
+                                  });
+                                }}
+                                placeholder="আরও একটি কল নোট লিখুন"
+                                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 min-h-[70px]"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExtraCallNotes((prev) => prev.filter((_, i) => i !== idx))
+                                }
+                                className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 flex-shrink-0"
+                              >
+                                মুছুন
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => setExtraCallNotes((prev) => [...prev, ''])}
+                          className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg border border-dashed border-slate-300 text-slate-700 hover:bg-slate-50"
+                        >
+                          + আরও কল নোট যোগ করুন
+                        </button>
                       </div>
                     )}
 
@@ -737,13 +800,26 @@ export default function AddCustomerPage() {
                         <div>
                           <label className="text-sm font-bold text-slate-900 mb-3 block">রিমাইন্ডার নোট লিখুন</label>
                           <textarea
-                            name="notes"
-                            value={formData.notes || ''}
+                            name="rememberText"
+                            value={formData.rememberText || ''}
                             onChange={handleInputChange}
                             placeholder="রিমাইন্ডার নোট লিখুন"
                             className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 min-h-[80px]"
                           />
                         </div>
+                      </div>
+                    )}
+
+                    {selectedCommentType === 'sell' && (
+                      <div>
+                        <label className="text-sm font-bold text-slate-900 mb-3 block">সেল নোট / বিল নম্বর</label>
+                        <textarea
+                          name="sellNote"
+                          value={formData.sellNote || ''}
+                          onChange={handleInputChange}
+                          placeholder="সেল নোট বা বিল নম্বর লিখুন"
+                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition bg-white text-slate-900 min-h-[80px]"
+                        />
                       </div>
                     )}
                   </div>

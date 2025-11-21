@@ -29,6 +29,7 @@ export const createShowroomCustomer = async (req, res) => {
       randomCustomer,
       quotation,
       rememberNote,
+      sellNote,
       customerType,
       businessName,
     } = req.body || {};
@@ -57,6 +58,7 @@ export const createShowroomCustomer = async (req, res) => {
       upazila: upazila ? String(upazila).trim() : "",
       interestLevel: typeof interestLevel === 'number' ? interestLevel : (parseInt(interestLevel, 10) || 0),
       notes: note ? String(note) : "",
+      sellNote: sellNote ? String(sellNote) : "",
       randomCustomer: randomCustomer ? String(randomCustomer) : "",
       quotation: quotation ? String(quotation) : "",
       rememberNote: rememberNote ? String(rememberNote) : "",
@@ -82,6 +84,7 @@ export const createShowroomCustomer = async (req, res) => {
         showroomBranch: saved.showroomBranch,
         status: saved.status,
         notes: saved.notes,
+        sellNote: saved.sellNote,
         email: saved.email,
         division: saved.division,
         upazila: saved.upazila,
@@ -137,6 +140,7 @@ export const listShowroomCustomers = async (req, res) => {
         showroomBranch: d.showroomBranch,
         status: d.status,
         notes: d.notes,
+        sellNote: d.sellNote,
         email: d.email,
         division: d.division,
         upazila: d.upazila,
@@ -207,7 +211,7 @@ export const updateShowroomCustomer = async (req, res) => {
     if (!id || !mongoose.isValidObjectId(id)) {
       return res.status(400).json({ message: "Invalid customer id" });
     }
-    const { customerName, phoneNumber, category, status, notes, note } = req.body || {};
+    const { customerName, phoneNumber, category, status, notes, note, sellNote } = req.body || {};
     const update = {};
     if (customerName) update.customerName = customerName;
     if (phoneNumber) update.phoneNumber = phoneNumber;
@@ -215,6 +219,7 @@ export const updateShowroomCustomer = async (req, res) => {
     if (status) update.status = status;
     const finalNotes = notes !== undefined ? notes : note;
     if (finalNotes !== undefined) update.notes = String(finalNotes);
+    if (sellNote !== undefined) update.sellNote = String(sellNote);
     const doc = await ShowroomCustomer.findByIdAndUpdate(id, update, { new: true });
     if (!doc) return res.status(404).json({ message: "Customer not found" });
     return res.status(200).json({
@@ -226,6 +231,7 @@ export const updateShowroomCustomer = async (req, res) => {
         showroomBranch: doc.showroomBranch,
         status: doc.status,
         notes: doc.notes,
+        sellNote: doc.sellNote,
         createdAt: doc.createdAt,
       },
     });

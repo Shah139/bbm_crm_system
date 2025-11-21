@@ -25,6 +25,7 @@ interface Customer {
   notes?: string;
   randomCustomer?: string;
   showroom?: string;
+  sellNote?: string;
 }
 
 interface EditingCustomer {
@@ -185,6 +186,7 @@ export default function CustomerListPage() {
           notes: c.note || c.notes || "",
           randomCustomer: c.randomCustomer || "",
           showroom: c.showroomBranch || "",
+          sellNote: c.sellNote || "",
         };
       });
 
@@ -808,6 +810,14 @@ export default function CustomerListPage() {
                                 </div>
                                 <div className="font-medium">
                                   {fmtDate(customer.rememberDate) || "-"}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold text-slate-500">
+                                  সেল নোট / বিল নম্বর
+                                </div>
+                                <div className="font-medium">
+                                  {customer.sellNote || "-"}
                                 </div>
                               </div>
                             </div>

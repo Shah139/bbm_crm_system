@@ -23,6 +23,7 @@ interface Customer {
   rememberDate?: string;
   notes?: string;
   randomCustomer?: string;
+  sellNote?: string;
 }
 
 interface EditingCustomer {
@@ -154,6 +155,7 @@ export default function EditEntriesPage() {
             rememberNote: c.rememberNote || '',
             rememberDate: c.rememberDate || '',
             notes: c.note || c.notes || '',
+            sellNote: c.sellNote || '',
           };
         });
       setCustomers(mapped);
@@ -471,6 +473,10 @@ export default function EditEntriesPage() {
                               <div>
                                 <div className="text-xs font-bold text-slate-500">রিমাইন্ডারের তারিখ</div>
                                 <div className="font-medium">{fmtDate(customer.rememberDate) || '-'}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold text-slate-500">সেল নোট / বিল নম্বর</div>
+                                <div className="font-medium">{customer.sellNote || '-'}</div>
                               </div>
                             </div>
                           </td>
