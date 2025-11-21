@@ -71,8 +71,6 @@ export default function CustomerListPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [detailsOpen, setDetailsOpen] = useState<Record<string, boolean>>({});
-  const [noteCustomer, setNoteCustomer] = useState<Customer | null>(null);
-  const [noteText, setNoteText] = useState<string>("");
   const [noteFilter, setNoteFilter] = useState<"all" | "quotation" | "random" | "call">("all");
   const [dateFilter, setDateFilter] = useState<
     "all" | "today" | "yesterday" | "7" | "30"
@@ -309,6 +307,111 @@ export default function CustomerListPage() {
     return Array.from(set).sort();
   }, [customers]);
 
+  const handlePrintAll = () => {
+    if (customers.length === 0) {
+      show("প্রিন্ট করার মতো কোনো কাস্টমার পাওয়া যায়নি");
+      return;
+    }
+
+    // Group all customers by normalized phone to collect all visits per person
+    const groups = new Map<
+      string,
+      {
+        name: string;
+        phone: string;
+        category: string;
+        visits: { date: string; time: string }[];
+      }
+    >();
+
+    customers.forEach((c) => {
+      const key = normalizePhone(c.phone) || c.id;
+      const d = new Date(c.createdAt);
+      const dateStr = isNaN(d.getTime())
+        ? c.createdAt
+        : d.toISOString().slice(0, 10);
+      const timeStr = formatVisitTime(c.createdAt);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          name: c.name,
+          phone: c.phone,
+          category: c.category,
+          visits: [],
+        });
+      }
+      const g = groups.get(key)!;
+      g.visits.push({ date: dateStr, time: timeStr });
+    });
+
+    const rowsHtml = Array.from(groups.values())
+      .map((g) => {
+        const visitLines = g.visits
+          .map((v, idx) => `${idx + 1}. ${v.date} ${v.time}`)
+          .join("<br/>");
+        return `
+          <tr>
+            <td>${g.name || ""}</td>
+            <td>${g.phone || ""}</td>
+            <td>${g.category || ""}</td>
+            <td>${g.visits.length}</td>
+            <td>${visitLines}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="bn">
+        <head>
+          <meta charSet="utf-8" />
+          <title>শোরুম কাস্টমার তালিকা</title>
+          <style>
+            body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; }
+            h1 { font-size: 20px; margin-bottom: 8px; }
+            p { margin: 0 0 16px 0; font-size: 13px; color: #4b5563; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; vertical-align: top; }
+            th { background: #f3f4f6; font-weight: 600; }
+            .small { font-size: 11px; color: #6b7280; margin-top: 4px; }
+          </style>
+        </head>
+        <body>
+          <h1>শোরুম কাস্টমার তালিকা (প্রিন্ট)</h1>
+          <p>মোট ${groups.size} জন কাস্টমার - তৈরি হয়েছে ${new Date().toLocaleString()}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>নাম</th>
+                <th>ফোন</th>
+                <th>ক্যাটাগরি</th>
+                <th>মোট ভিজিট</th>
+                <th>ভিজিটের তারিখ ও সময়</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          <p class="small">নোট: একই ফোন নম্বরের সব ভিজিট একসাথে দেখানো হয়েছে।</p>
+          <script>
+            window.onload = function() { window.print(); };
+          </script>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      show("প্রিন্ট উইন্ডো খোলা যায়নি");
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   const handleEdit = (customer: Customer) => {
     setEditingId(customer.id);
     setEditingData({
@@ -401,17 +504,71 @@ export default function CustomerListPage() {
     }
   };
 
+  const handleSaveDetails = async (customer: Customer) => {
+    try {
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) return show("Not authenticated");
+
+      const res = await fetch(
+        `${baseUrl}/api/user/showroom/customers/${customer.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            customerName: customer.name,
+            phoneNumber: customer.phone,
+            category: customer.category,
+            email: customer.email,
+            division: customer.division,
+            upazila: customer.zila,
+            interestLevel: customer.interestLevel,
+            customerType: customer.customerType,
+            businessName: customer.businessName,
+            quotation: customer.quotation,
+            rememberNote: customer.rememberNote,
+            rememberDate: customer.rememberDate,
+            randomCustomer: customer.randomCustomer,
+            showroomBranch: customer.showroom,
+            note: customer.notes,
+            sellNote: customer.sellNote,
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("ডিটেইলস আপডেট করা যায়নি");
+      await res.json();
+      show("ডিটেইলস সফলভাবে আপডেট হয়েছে!");
+    } catch (e: any) {
+      show(e?.message || "ডিটেইলস আপডেট করা যায়নি");
+    }
+  };
+
   return (
     <div className="min-h-screen p-8 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">
-            শোরুম কাস্টমার তালিকা
-          </h1>
-          <p className="text-slate-600 text-lg">
-            সব ভিজিটের কাস্টমার তথ্য দেখুন, ম্যানেজ ও আপডেট করুন
-          </p>
+        <div className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">
+              শোরুম কাস্টমার তালিকা
+            </h1>
+            <p className="text-slate-600 text-lg">
+              সব ভিজিটের কাস্টমার তথ্য দেখুন, ম্যানেজ ও আপডেট করুন
+            </p>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={handlePrintAll}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-500 bg-emerald-500 text-sm font-semibold text-white hover:bg-emerald-600 hover:border-emerald-600 shadow-sm"
+            >
+              <span>প্রিন্ট / PDF</span>
+            </button>
+          </div>
         </div>
 
         {/* Search + Filters */}
@@ -679,7 +836,7 @@ export default function CustomerListPage() {
                         {/* Actions */}
                         <td className="px-8 py-5 text-sm">
                           <div className="flex items-center justify-center gap-2">
-                            {editingId === customer.id ? (
+                            {editingId === customer.id && editingData ? (
                               <>
                                 <button
                                   onClick={() => handleSaveEdit(customer.id)}
@@ -725,23 +882,13 @@ export default function CustomerListPage() {
                                 >
                                   <Edit2 size={18} />
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    setNoteCustomer(customer);
-                                    setNoteText(customer.notes || "");
-                                  }}
-                                  className="p-2 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg transition"
-                                  title="নোট দেখুন"
-                                >
-                                  <span className="text-xs font-bold">নোট</span>
-                                </button>
                               </>
                             )}
                           </div>
                         </td>
                       </tr>
 
-                      {/* Expanded details row */}
+                      {/* Expanded details row - fully editable */}
                       {detailsOpen[customer.id] && (
                         <tr className="bg-slate-50 border-b border-slate-100">
                           <td className="px-8 py-5 text-sm" colSpan={7}>
@@ -750,81 +897,300 @@ export default function CustomerListPage() {
                                 <div className="text-xs font-bold text-slate-500">
                                   ইমেইল
                                 </div>
-                                <div className="font-medium">
-                                  {customer.email || "-"}
-                                </div>
+                                <input
+                                  type="email"
+                                  value={customer.email || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, email: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
                                   বিভাগ
                                 </div>
-                                <div className="font-medium">
-                                  {customer.division || "-"}
-                                </div>
+                                <input
+                                  type="text"
+                                  value={customer.division || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, division: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
                                   জেলা
                                 </div>
-                                <div className="font-medium">
-                                  {customer.zila || "-"}
-                                </div>
+                                <input
+                                  type="text"
+                                  value={customer.zila || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, zila: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
-                                  আগ্রহের মাত্রা
+                                  আগ্রহের মাত্রা (০-৫)
                                 </div>
-                                <div className="font-medium">
-                                  {typeof customer.interestLevel === "number"
-                                    ? `${customer.interestLevel} / 5`
-                                    : "-"}
-                                </div>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={5}
+                                  value={
+                                    typeof customer.interestLevel === "number"
+                                      ? customer.interestLevel
+                                      : ""
+                                  }
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const num = val === "" ? undefined : Number(val);
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, interestLevel: num as number | undefined }
+                                          : c
+                                      )
+                                    );
+                                  }}
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
                                   কাস্টমার টাইপ
                                 </div>
-                                <div className="font-medium">
-                                  {customer.customerType || "-"}
-                                </div>
+                                <input
+                                  type="text"
+                                  value={customer.customerType || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, customerType: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
                                   ব্যবসার নাম
                                 </div>
-                                <div className="font-medium">
-                                  {customer.businessName || "-"}
-                                </div>
+                                <input
+                                  type="text"
+                                  value={customer.businessName || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, businessName: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
                                   কোটেশন
                                 </div>
-                                <div className="font-medium">
-                                  {customer.quotation || "-"}
-                                </div>
+                                <input
+                                  type="text"
+                                  value={customer.quotation || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, quotation: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
                                   রিমাইন্ডারের তারিখ
                                 </div>
-                                <div className="font-medium">
-                                  {fmtDate(customer.rememberDate) || "-"}
+                                <input
+                                  type="date"
+                                  value={fmtDate(customer.rememberDate) || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, rememberDate: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
+                              </div>
+                              <div className="md:col-span-1">
+                                <div className="text-xs font-bold text-slate-500">
+                                  রিমাইন্ডার নোট
+                                </div>
+                                <textarea
+                                  value={customer.rememberNote || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, rememberNote: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm min-h-[60px]"
+                                />
+                              </div>
+                              <div className="md:col-span-1">
+                                <div className="text-xs font-bold text-slate-500">
+                                  র‍্যান্ডম কাস্টমার নোট
+                                </div>
+                                <textarea
+                                  value={customer.randomCustomer || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, randomCustomer: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm min-h-[60px]"
+                                />
+                              </div>
+                              <div className="md:col-span-1">
+                                <div className="text-xs font-bold text-slate-500">
+                                  সাধারণ নোট
+                                </div>
+                                <textarea
+                                  value={customer.notes || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, notes: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm min-h-[80px]"
+                                />
+                              </div>
+                              <div className="md:col-span-1">
+                                <div className="text-xs font-bold text-slate-500">
+                                  সেল নোট / বিল নম্বর
+                                </div>
+                                <textarea
+                                  value={customer.sellNote || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, sellNote: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm min-h-[60px]"
+                                />
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold text-slate-500">
+                                  সব ভিজিটের তারিখ
+                                </div>
+                                <div className="font-medium text-sm text-slate-800 mt-1">
+                                  {(() => {
+                                    const key = normalizePhone(customer.phone);
+                                    if (!key) return "-";
+                                    const dates = customers
+                                      .filter((c) => normalizePhone(c.phone) === key && c.createdAt)
+                                      .map((c) => {
+                                        const d = new Date(c.createdAt);
+                                        return isNaN(d.getTime())
+                                          ? String(c.createdAt)
+                                          : d.toISOString().slice(0, 10);
+                                      });
+                                    if (!dates.length) return "-";
+                                    const unique = Array.from(new Set(dates));
+                                    return unique.map((d, idx) => `${idx + 1}. ${d}`).join(" | ");
+                                  })()}
                                 </div>
                               </div>
                               <div>
                                 <div className="text-xs font-bold text-slate-500">
-                                  সেল নোট / বিল নম্বর
+                                  শোরুম
                                 </div>
-                                <div className="font-medium">
-                                  {customer.sellNote || "-"}
-                                </div>
+                                <input
+                                  type="text"
+                                  value={customer.showroom || ""}
+                                  onChange={(e) =>
+                                    setCustomers((prev) =>
+                                      prev.map((c) =>
+                                        c.id === customer.id
+                                          ? { ...c, showroom: e.target.value }
+                                          : c
+                                      )
+                                    )
+                                  }
+                                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm"
+                                />
                               </div>
+                            </div>
+                            <div className="mt-6 flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setDetailsOpen((prev) => ({
+                                    ...prev,
+                                    [customer.id]: false,
+                                  }))
+                                }
+                                className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 text-sm font-semibold"
+                              >
+                                বন্ধ করুন
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSaveDetails(customer)}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-semibold"
+                              >
+                                সব ডিটেইলস সেভ করুন
+                              </button>
                             </div>
                           </td>
                         </tr>
                       )}
-
                       {/* Delete confirm inline row */}
                       {deleteConfirmId === customer.id && (
                         <tr className="bg-red-50 border-b border-red-100">
@@ -905,82 +1271,6 @@ export default function CustomerListPage() {
         onClose={() => setShowToast(false)}
         duration={3000}
       />
-
-      {/* Note modal */}
-      {noteCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-900">কাস্টমার নোট</h3>
-              <button
-                onClick={() => setNoteCustomer(null)}
-                className="p-2 rounded-lg hover:bg-slate-100"
-                aria-label="বন্ধ করুন"
-                title="বন্ধ করুন"
-              >
-                <X size={18} className="text-slate-700" />
-              </button>
-            </div>
-            <div className="space-y-4 text-sm">
-              <div>
-                <div className="text-xs font-bold text-slate-500">সাধারণ নোট</div>
-                <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  className="mt-2 w-full min-h-[100px] px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
-                  placeholder="নোট লিখুন..."
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={() => setNoteCustomer(null)}
-                className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 font-bold"
-              >
-                বন্ধ করুন
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const token =
-                      typeof window !== "undefined"
-                        ? localStorage.getItem("token")
-                        : null;
-                    if (!token || !noteCustomer) return;
-                    const res = await fetch(
-                      `${baseUrl}/api/user/showroom/customers/${noteCustomer.id}`,
-                      {
-                        method: "PUT",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ note: noteText }),
-                      }
-                    );
-                    if (!res.ok) throw new Error("নোট সংরক্ষণ করা যায়নি");
-                    await res.json();
-                    setCustomers((prev) =>
-                      prev.map((c) =>
-                        c.id === noteCustomer.id ? { ...c, notes: noteText } : c
-                      )
-                    );
-                    setToastMessage("নোট সংরক্ষিত হয়েছে");
-                    setShowToast(true);
-                    setNoteCustomer(null);
-                  } catch (e: any) {
-                    setToastMessage(e?.message || "নোট সংরক্ষণ করা যায়নি");
-                    setShowToast(true);
-                  }
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold"
-              >
-                নোট সংরক্ষণ করুন
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

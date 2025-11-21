@@ -34,7 +34,6 @@ interface ShowroomAccountClientProps {
 
 export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomAccountClientProps) {
   const [todayEntries, setTodayEntries] = useState<CustomerEntry[]>(initialTodayEntries || []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [formData, setFormData] = useState({ name: "", phone: "", interest: "" });
@@ -462,24 +461,7 @@ export default function ShowroomAccountClient({ initialTodayEntries }: ShowroomA
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Showroom Filter */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-300 mb-1">
-            শোরুম ফিল্টার
-          </label>
-          <select
-            value={selectedShowroom}
-            onChange={(e) => setSelectedShowroom(e.target.value)}
-            className="px-3 py-2  rounded-lg text-sm bg-gray-900 text-white "
-          >
-            <option value="">সব শোরুম</option>
-            {showrooms.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
+
 
         {/* Close Button */}
         <button

@@ -12,7 +12,8 @@ const menuItems = [
   { icon: "/reports.png", href: "/admin/reports", label: "Reports" },
   { icon: "/categories.png", href: "/admin/categories", label: "Categories" },
   { icon: "/feedbacks.png", href: "/admin/feedbacks", label: "Feedbacks" },
-  { icon: "/showroom.png", href: "/admin/showroom", label: "Showroom" },
+  { icon: "/showroom.png", href: "/admin/customer-list", label: "Customer-List" },
+  { icon: "/categories.png", href: "/admin/showroom", label: "Showroom" },
   { icon: "/settings.png", href: "/admin/message-settings", label: "Settings" },
 ];
 
