@@ -48,6 +48,19 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  
+  // Translation object for status
+  const statusTranslations: Record<string, string> = {
+    'all': 'সব',
+    'Interested': 'আগ্রহী',
+    'Not Interested': 'আগ্রহী নন',
+    'Follow-up': 'ফলো-আপ',
+    'dateDesc': 'সাম্প্রতিক',
+    'name': 'নাম',
+    'status': 'স্ট্যাটাস',
+    'visitDesc': 'দর্শন (উচ্চ থেকে নিম্ন)',
+    'visitAsc': 'দর্শন (নিম্ন থেকে উচ্চ)'
+  };
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<{ [key: string]: string }>({});
   const [notesModalId, setNotesModalId] = useState<string | null>(null);
@@ -71,7 +84,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
   const handleSaveDetails = async (customer: Customer) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      if (!token) throw new Error('Not authenticated');
+      if (!token) throw new Error('অনুগ্রহ করে লগইন করুন');
 
       const res = await fetch(`${baseUrl}/api/user/showroom/customers/${customer.id}`, {
         method: 'PUT',
@@ -91,10 +104,10 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
 
       if (!res.ok) throw new Error('Failed to update details');
       await res.json();
-      setToastMessage('Details updated successfully');
+      setToastMessage('বিবরণ সফলভাবে আপডেট করা হয়েছে');
       setShowToast(true);
     } catch (e: any) {
-      setToastMessage(e?.message || 'Failed to update details');
+      setToastMessage(e?.message || 'বিবরণ আপডেট করতে ব্যর্থ হয়েছে');
       setShowToast(true);
     }
   };
@@ -113,11 +126,11 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
       if (!res.ok) throw new Error('Failed to delete customer');
       setCustomers((cur) => cur.filter((c) => c.id !== id));
       setDeleteConfirmId(null);
-      setToastMessage('Customer deleted successfully');
+      setToastMessage('গ্রাহক সফলভাবে মুছে ফেলা হয়েছে');
       setShowToast(true);
     } catch (e: any) {
       setCustomers(prev);
-      setToastMessage(e?.message || 'Failed to delete customer');
+      setToastMessage(e?.message || 'গ্রাহক মুছতে ব্যর্থ হয়েছে');
       setShowToast(true);
     }
   };
@@ -183,7 +196,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
 
         setCustomers(withCounts);
       } catch (e: any) {
-        setToastMessage(e?.message || 'Failed to load');
+        setToastMessage('ডেটা লোড করতে ব্যর্থ হয়েছে');
         setShowToast(true);
       }
     };
@@ -275,18 +288,18 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
     setCustomers(next);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      if (!token) throw new Error('Not authenticated');
+      if (!token) throw new Error('অনুগ্রহ করে লগইন করুন');
       const res = await fetch(`${baseUrl}/api/user/showroom/customers/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) throw new Error('Failed to update status');
-      setToastMessage('Status updated');
+      setToastMessage('স্ট্যাটাস আপডেট করা হয়েছে');
       setShowToast(true);
     } catch (e: any) {
       setCustomers(prev);
-      setToastMessage(e?.message || 'Failed to update status');
+      setToastMessage(e?.message || 'স্ট্যাটাস আপডেট করতে ব্যর্থ হয়েছে');
       setShowToast(true);
     }
   };
@@ -310,11 +323,11 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
       if (!res.ok) throw new Error('Failed to save notes');
       const { [id]: _, ...rest } = editingNotes;
       setEditingNotes(rest);
-      setToastMessage('Notes saved successfully!');
+      setToastMessage('নোটস সফলভাবে সংরক্ষিত হয়েছে!');
       setShowToast(true);
     } catch (e: any) {
       setCustomers(prev);
-      setToastMessage(e?.message || 'Failed to save notes');
+      setToastMessage(e?.message || 'নোটস সংরক্ষণ করতে ব্যর্থ হয়েছে');
       setShowToast(true);
     }
   };
@@ -353,15 +366,15 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
     <div className="min-h-screen p-8 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="mb-10">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Customer List</h1>
-          <p className="text-slate-600 text-lg">Manage customer information and follow-up status</p>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">গ্রাহক তালিকা</h1>
+          <p className="text-slate-600 text-lg">গ্রাহকের তথ্য এবং ফলো-আপ স্ট্যাটাস পরিচালনা করুন</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Total Customers</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">মোট গ্রাহক</p>
                 <p className="text-4xl font-bold text-slate-900">{stats.total}</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
@@ -373,9 +386,9 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Interested</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">আগ্রহী</p>
                 <p className="text-4xl font-bold text-emerald-600">{stats.interested}</p>
-                <p className="text-xs text-slate-400 mt-2">{((stats.interested / stats.total) * 100).toFixed(0)}% of total</p>
+                <p className="text-xs text-slate-400 mt-2">মোটের {((stats.interested / stats.total) * 100).toFixed(0)}%</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl">
                 <Users className="w-8 h-8 text-emerald-600" />
@@ -386,9 +399,9 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Follow-up</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">ফলো-আপ</p>
                 <p className="text-4xl font-bold text-amber-600">{stats.followUp}</p>
-                <p className="text-xs text-slate-400 mt-2">{((stats.followUp / stats.total) * 100).toFixed(0)}% of total</p>
+                <p className="text-xs text-slate-400 mt-2">মোটের {((stats.followUp / stats.total) * 100).toFixed(0)}%</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl">
                 <Users className="w-8 h-8 text-amber-600" />
@@ -399,9 +412,9 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Not Interested</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">আগ্রহী নন</p>
                 <p className="text-4xl font-bold text-rose-600">{stats.notInterested}</p>
-                <p className="text-xs text-slate-400 mt-2">{((stats.notInterested / stats.total) * 100).toFixed(0)}% of total</p>
+                <p className="text-xs text-slate-400 mt-2">মোটের {((stats.notInterested / stats.total) * 100).toFixed(0)}%</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl">
                 <Users className="w-8 h-8 text-rose-600" />
@@ -413,12 +426,12 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 mb-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-bold text-slate-900 mb-3">Search</label>
+              <label className="block text-sm font-bold text-slate-900 mb-3">খুঁজুন</label>
               <div className="relative">
                 <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Name, phone, or interest..."
+                  placeholder="নাম, ফোন, বা আগ্রহ..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 transition text-slate-900 font-medium"
@@ -427,21 +440,21 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-900 mb-3">Filter by Status</label>
+              <label className="block text-sm font-bold text-slate-900 mb-3">স্ট্যাটাস দিয়ে ফিল্টার করুন</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 transition bg-white text-slate-900 font-medium"
               >
-                <option value="all">All Status</option>
-                <option value="Interested">Interested</option>
-                <option value="Follow-up">Follow-up</option>
-                <option value="Not Interested">Not Interested</option>
+                <option value="all">সব স্ট্যাটাস</option>
+                <option value="Interested">আগ্রহী</option>
+                <option value="Follow-up">ফলো-আপ</option>
+                <option value="Not Interested">আগ্রহী নন</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-900 mb-3">Sort By</label>
+              <label className="block text-sm font-bold text-slate-900 mb-3">সাজান</label>
               <select
                 value={sortBy === 'dateDesc' ? 'name' : sortBy}
                 onChange={(e) =>
@@ -451,34 +464,34 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                 }
                 className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 transition bg-white text-slate-900 font-medium"
               >
-                <option value="name">Name (A-Z)</option>
-                <option value="status">Status (Priority)</option>
-                <option value="visitDesc">Visit Count (High to Low)</option>
-                <option value="visitAsc">Visit Count (Low to High)</option>
+                <option value="name">নাম (ক-হ)</option>
+                <option value="status">স্ট্যাটাস (অগ্রাধিকার)</option>
+                <option value="visitDesc">দর্শনের সংখ্যা (বেশি থেকে কম)</option>
+                <option value="visitAsc">দর্শনের সংখ্যা (কম থেকে বেশি)</option>
               </select>
             </div>
           </div>
           {/* Date filter row */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-bold text-slate-900 mb-3">Filter by Date</label>
+              <label className="block text-sm font-bold text-slate-900 mb-3">তারিখ দিয়ে ফিল্টার করুন</label>
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value as any)}
                 className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 transition bg-white text-slate-900 font-medium"
               >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week (Last 7 days)</option>
-                <option value="month">This Month (Last 30 days)</option>
-                <option value="custom">Custom Range</option>
+                <option value="all">সব সময়</option>
+                <option value="today">আজ</option>
+                <option value="week">এই সপ্তাহ (গত ৭ দিন)</option>
+                <option value="month">এই মাস (গত ৩০ দিন)</option>
+                <option value="custom">কাস্টম তারিখ</option>
               </select>
             </div>
 
             {dateFilter === 'custom' && (
               <>
                 <div>
-                  <label className="block text-sm font-bold text-slate-900 mb-3">From</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-3">থেকে</label>
                   <input
                     type="date"
                     value={customFrom}
@@ -487,7 +500,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-900 mb-3">To</label>
+                  <label className="block text-sm font-bold text-slate-900 mb-3">পর্যন্ত</label>
                   <input
                     type="date"
                     value={customTo}
@@ -502,21 +515,21 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-8 border-b border-slate-100">
-            <h2 className="text-xl font-bold text-slate-900">Customers ({filteredCustomers.length})</h2>
+            <h2 className="text-xl font-bold text-slate-900">গ্রাহকগণ ({filteredCustomers.length})</h2>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Customer Name</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Phone</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Interest</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Visit Count</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Status</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Actions</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">গ্রাহকের নাম</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">ফোন</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">আগ্রহ</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">দর্শনের সংখ্যা</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">স্ট্যাটাস</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">কার্যকলাপ</th>
                   {showDelete && (
-                    <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Delete</th>
+                    <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">মুছুন</th>
                   )}
                 </tr>
               </thead>
@@ -556,9 +569,9 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                             onChange={(e) => handleStatusChange(customer.id, e.target.value as 'Interested' | 'Not Interested' | 'Follow-up')}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 focus:outline-none focus:ring-2 focus:ring-slate-900 transition cursor-pointer ${getStatusColor(customer.status)}`}
                           >
-                            <option value="Interested">Interested</option>
-                            <option value="Follow-up">Follow-up</option>
-                            <option value="Not Interested">Not Interested</option>
+                            <option value="Interested">আগ্রহী</option>
+                            <option value="Follow-up">ফলো-আপ</option>
+                            <option value="Not Interested">আগ্রহী নন</option>
                           </select>
                         </td>
                         <td className="px-8 py-5 text-sm">
@@ -568,14 +581,14 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                               className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition font-semibold text-xs border border-slate-300 min-w-[140px]"
                             >
                               <FileText size={16} />
-                              Edit Notes
+                              নোট এডিট
                             </button>
                             <button
                               type="button"
                               onClick={() => setDetailsOpen((prev) => ({ ...prev, [customer.id]: !prev[customer.id] }))}
                               className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-black rounded-lg border border-slate-300 hover:bg-slate-100 min-w-[140px]"
                             >
-                              {detailsOpen[customer.id] ? 'Hide Details' : 'View Details'}
+                              {detailsOpen[customer.id] ? 'বিস্তারিত লুকান' : 'বিস্তারিত দেখুন'}
                             </button>
                           </div>
                         </td>
@@ -587,7 +600,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                               className="inline-flex items-center justify-center px-3 py-2 text-xs font-semibold text-red-600 rounded-lg border border-red-200 hover:bg-red-50"
                             >
                               <Trash2 size={16} className="mr-1" />
-                              Delete
+                              মুছুন
                             </button>
                           </td>
                         )}
@@ -598,7 +611,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                           <td className="px-8 py-5 text-sm" colSpan={showDelete ? 7 : 6}>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-slate-700">
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Email</div>
+                                <div className="text-xs font-bold text-slate-500">ইমেইল</div>
                                 {editableDetails ? (
                                   <input
                                     type="email"
@@ -617,7 +630,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Division</div>
+                                <div className="text-xs font-bold text-slate-500">বিভাগ</div>
                                 {editableDetails ? (
                                   <input
                                     type="text"
@@ -636,7 +649,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Zila</div>
+                                <div className="text-xs font-bold text-slate-500">জেলা</div>
                                 {editableDetails ? (
                                   <input
                                     type="text"
@@ -655,7 +668,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Interest Level</div>
+                                <div className="text-xs font-bold text-slate-500">আগ্রহের মাত্রা</div>
                                 {editableDetails ? (
                                   <input
                                     type="number"
@@ -682,13 +695,13 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 ) : (
                                   <div className="font-medium">
                                     {typeof customer.interestLevel === 'number'
-                                      ? `${customer.interestLevel} / 5`
+                                      ? `${customer.interestLevel}/5`
                                       : '-'}
                                   </div>
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Customer Type</div>
+                                <div className="text-xs font-bold text-slate-500">গ্রাহকের ধরন</div>
                                 {editableDetails ? (
                                   <input
                                     type="text"
@@ -709,7 +722,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Business Name</div>
+                                <div className="text-xs font-bold text-slate-500">ব্যবসার নাম</div>
                                 {editableDetails ? (
                                   <input
                                     type="text"
@@ -730,7 +743,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Quotation</div>
+                                <div className="text-xs font-bold text-slate-500">কোটেশন</div>
                                 {editableDetails ? (
                                   <input
                                     type="text"
@@ -751,7 +764,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Reminder Date</div>
+                                <div className="text-xs font-bold text-slate-500">মনে করিয়ে দেওয়ার তারিখ</div>
                                 {editableDetails ? (
                                   <input
                                     type="date"
@@ -776,7 +789,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Sell Note / Bill No</div>
+                                <div className="text-xs font-bold text-slate-500">বিক্রয় নোট / বিল নম্বর</div>
                                 {editableDetails ? (
                                   <textarea
                                     value={customer.sellNote || ''}
@@ -796,7 +809,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                 )}
                               </div>
                               <div>
-                                <div className="text-xs font-bold text-slate-500">Visit Dates</div>
+                                <div className="text-xs font-bold text-slate-500">দর্শনের তারিখসমূহ</div>
                                 <div className="font-medium">
                                   {(() => {
                                     const key = normalizePhone(customer.phone);
@@ -823,14 +836,14 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                                   onClick={() => setDetailsOpen((prev) => ({ ...prev, [customer.id]: false }))}
                                   className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 text-sm font-semibold"
                                 >
-                                  Close
+                                  বন্ধ করুন
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleSaveDetails(customer)}
                                   className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-semibold"
                                 >
-                                  Save Details
+                                  সংরক্ষণ করুন
                                 </button>
                               </div>
                             )}
@@ -843,20 +856,20 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                           <td className="px-8 py-4 text-sm" colSpan={7}>
                             <div className="flex items-center justify-between gap-4">
                               <p className="text-red-700 font-medium">
-                                Are you sure you want to delete "{customer.name}"?
+                                আপনি কি নিশ্চিতভাবে "{customer.name}" কে মুছে ফেলতে চান?
                               </p>
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => setDeleteConfirmId(null)}
                                   className="px-4 py-2 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-100 text-sm font-semibold"
                                 >
-                                  Cancel
+                                  বাতিল করুন
                                 </button>
                                 <button
                                   onClick={() => handleDeleteConfirm(customer.id)}
                                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-semibold"
                                 >
-                                  Yes, Delete
+                                  হ্যাঁ, মুছে ফেলুন
                                 </button>
                               </div>
                             </div>
@@ -871,7 +884,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
                       colSpan={showDelete ? 7 : 6}
                       className="px-8 py-12 text-center text-slate-500"
                     >
-                      No customers found matching your search criteria
+                      আপনার অনুসন্ধানের সাথে মিলে যায় এমন কোন গ্রাহক পাওয়া যায়নি
                     </td>
                   </tr>
                 )}
@@ -886,7 +899,7 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
           <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6 flex items-center justify-between border-b border-blue-500 rounded-t-xl">
               <div>
-                <h2 className="text-xl font-bold text-white">Edit Notes</h2>
+                <h2 className="text-xl font-bold text-white">নোট এডিট করুন</h2>
                 <p className="text-blue-100 text-sm mt-1">{customers.find((c) => c.id === notesModalId)?.name}</p>
               </div>
               <button onClick={() => setNotesModalId(null)} className="p-2 hover:bg-blue-500 rounded-lg transition text-white">
@@ -895,23 +908,23 @@ export default function CustomersClient({ showDelete, editableDetails }: Custome
             </div>
 
             <div className="p-8">
-              <label className="block text-sm font-bold text-slate-900 mb-4">Notes</label>
+              <label className="block text-sm font-bold text-slate-900 mb-4">নোটসমূহ</label>
               <textarea
                 value={notesModalContent}
                 onChange={(e) => setNotesModalContent(e.target.value)}
-                placeholder="Add or edit customer notes..."
+                placeholder="গ্রাহকের নোট যোগ বা এডিট করুন..."
                 rows={6}
                 className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition resize-none text-slate-900 font-medium"
               />
-              <p className="text-xs text-slate-400 mt-2">{notesModalContent.length} characters</p>
+                <p className="text-xs text-slate-400 mt-2">{notesModalContent.length} অক্ষর</p>
 
               <div className="flex gap-3 mt-6">
                 <button onClick={() => setNotesModalId(null)} className="flex-1 px-4 py-3 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition font-bold">
-                  Cancel
+                  বাতিল করুন
                 </button>
                 <button onClick={handleSaveModalNotes} className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-bold flex items-center justify-center gap-2">
                   <Save size={18} />
-                  Save Notes
+                  নোট সংরক্ষণ করুন
                 </button>
               </div>
             </div>

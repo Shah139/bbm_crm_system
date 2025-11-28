@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Users, BarChart3, LineChart } from "lucide-react";
+import { bn, formatBanglaNumber, getTranslatedDay } from "@/utils/translations";
 
 export interface VisitorTrendData { day: string; visitors: number; accuracy: number; performance: number }
 
@@ -27,7 +28,8 @@ function startOfDay(d: Date) {
 }
 
 function formatDayLabel(d: Date): string {
-  return d.toLocaleDateString("en-US", { weekday: "short" });
+  const day = d.toLocaleDateString("en-US", { weekday: "short" });
+  return getTranslatedDay(day);
 }
 
 export default function OfficeDashboardClient() {
@@ -278,23 +280,25 @@ export default function OfficeDashboardClient() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Dashboard</h1>
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">ড্যাশবোর্ড</h1>
             <p className="text-slate-600 text-lg">
-              Welcome back! Here's your business performance overview.
+              স্বাগতম! এখানে আপনার ব্যবসার কর্মক্ষমতার সারসংক্ষেপ রয়েছে।
             </p>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-600 mb-1">Showroom Filter</label>
+              <label className="text-sm font-medium text-slate-700 mb-1">শোরুম নির্বাচন করুন</label>
               <select
                 value={selectedShowroom}
                 onChange={(e) => setSelectedShowroom(e.target.value)}
-                className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-900 min-w-[160px]"
+                className="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">All Showrooms</option>
-                {showrooms.map((s) => (
-                  <option key={s.id} value={s.name}>{s.name}</option>
+                <option value="">সব শোরুম</option>
+                {showrooms.map((showroom) => (
+                  <option key={showroom.id} value={showroom.name}>
+                    {showroom.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -306,25 +310,24 @@ export default function OfficeDashboardClient() {
               }}
               className="px-4 py-2 text-sm font-semibold rounded-lg bg-black text-white transition-all duration-200 shadow-sm"
             >
-              Todays Customer Entries
+              আজকের গ্রাহক এন্ট্রি
             </button>
           </div>
         </div>
-
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
           {/* Total Visitors Today */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Total Visitors Today</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">আজকের মোট দর্শক</p>
                 <div className="flex items-baseline gap-3">
-                  <p className="text-4xl font-bold text-slate-900">{visitorsToday}</p>
+                  <p className="text-4xl font-bold text-slate-900">{formatBanglaNumber(visitorsToday)}</p>
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg">
-                    <span className="text-sm font-semibold text-emerald-600">live</span>
+                    <span className="text-sm font-semibold text-emerald-600">লাইভ</span>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-3">based on showroom entries</p>
+                <p className="text-xs text-slate-400 mt-3">শোরুম এন্ট্রি অনুযায়ী</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
                 <Users className="w-8 h-8 text-blue-600" />
@@ -336,11 +339,11 @@ export default function OfficeDashboardClient() {
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Admin Customers Today</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">আজকের অ্যাডমিন গ্রাহক</p>
                 <div className="flex items-baseline gap-3">
-                  <p className="text-4xl font-bold text-slate-900">{adminToday || 0}</p>
+                  <p className="text-4xl font-bold text-slate-900">{formatBanglaNumber(adminToday || 0)}</p>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">Total admin entries for the selected showroom or all showrooms.</p>
+                <p className="text-xs text-slate-400 mt-2">নির্বাচিত শোরুম বা সমস্ত শোরুমের মোট অ্যাডমিন এন্ট্রি।</p>
               </div>
             </div>
           </div>
@@ -349,11 +352,11 @@ export default function OfficeDashboardClient() {
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Data Accuracy</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">ডাটা সঠিকতা</p>
                 <div className="flex items-baseline gap-3 mb-1">
-                  <p className="text-4xl font-bold text-slate-900">{ratioPercent || 0}%</p>
+                  <p className="text-4xl font-bold text-slate-900">{formatBanglaNumber(ratioPercent || 0)}%</p>
                 </div>
-                <p className="text-xs text-slate-400">Overall accuracy for the selected showroom or all showrooms.</p>
+                <p className="text-xs text-slate-400">নির্বাচিত শোরুম বা সমস্ত শোরুমের সামগ্রিক সঠিকতা।</p>
               </div>
 
               <div className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl ml-4 flex-shrink-0">
@@ -366,11 +369,11 @@ export default function OfficeDashboardClient() {
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 hover:shadow-md transition-shadow duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Avg Performance</p>
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">গড় কর্মক্ষমতা</p>
                 <div className="flex items-baseline gap-3">
-                  <p className="text-4xl font-bold text-slate-900">{avgPerfByShowroom}%</p>
+                  <p className="text-4xl font-bold text-slate-900">{formatBanglaNumber(avgPerfByShowroom)}%</p>
                 </div>
-                <p className="text-xs text-slate-400 mt-3">per showroom</p>
+                <p className="text-sm text-slate-500 mb-4">শোরুম অনুযায়ী গড় কর্মক্ষমতা।</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
                 <LineChart className="w-8 h-8 text-purple-600" />
@@ -378,32 +381,31 @@ export default function OfficeDashboardClient() {
             </div>
           </div>
         </div>
-
         <OfficeDashboardChartsClient visitorTrendData={visitorTrendData} />
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mt-8">
           <div className="p-8 border-b border-slate-100">
-            <h2 className="text-xl font-bold text-slate-900">Showroom Performance Summary</h2>
+            <h2 className="text-xl font-semibold mb-4">শোরুম কর্মক্ষমতা সারাংশ</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Showroom</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Visitors</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Accuracy</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Performance</th>
-                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">Status</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">শোরুম</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">দর্শক</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">সঠিকতা</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">কর্মক্ষমতা</th>
+                  <th className="px-8 py-4 text-left text-sm font-bold text-slate-900">স্থিতি</th>
                 </tr>
               </thead>
               <tbody>
                 {summary.map((it, idx) => {
-                  const showroomName = it.showroom || it.showroomName || 'Showroom';
+                  const showroomName = it.showroom || it.showroomName || 'শোরুম';
                   const visitors = Number(it.uniqueCustomers || it.visitorsToday || 0);
                   // Accuracy for office-admin table: admin customers today / showroom visitors today * 100
                   const accRow = accuracyBreakdown.find((r) => (r.showroom || '') === (showroomName || ''));
                   const accuracy = accRow ? Number(accRow.accuracyPercent || 0) : 0;
-                  const status = (it.status === 'Active' ? 'Active' : 'Active');
+                  const status = (it.status === 'Active' ? bn.active : bn.inactive);
                   const perfKey = (showroomName || '').toString().toLowerCase().trim();
                   const perfEntry = perfByShowroom.get(perfKey);
                   const perfApiRaw = Number(it.performance);
@@ -420,7 +422,7 @@ export default function OfficeDashboardClient() {
                       <td className="px-8 py-5 text-sm">
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 text-blue-600" />
-                          <span className="font-semibold text-slate-900">{visitors}</span>
+                          <span className="font-semibold text-slate-900">{formatBanglaNumber(visitors)} জন</span>
                         </div>
                       </td>
                       <td className="px-8 py-5 text-sm">
@@ -431,11 +433,11 @@ export default function OfficeDashboardClient() {
                           <div className="w-28 bg-slate-200 rounded-full h-2">
                             <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${Math.max(0, Math.min(100, Math.abs(performance)))}%` }} />
                           </div>
-                          <span className="font-semibold text-slate-900 text-xs min-w-[40px]">{performance}%</span>
+                          <span className="font-semibold text-slate-900 text-xs min-w-[40px]">{formatBanglaNumber(performance)}%</span>
                         </div>
                       </td>
                       <td className="px-8 py-5 text-sm">
-                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>{status}</span>
+                        <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${status === bn.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>{status}</span>
                       </td>
                     </tr>
                   );
@@ -444,24 +446,26 @@ export default function OfficeDashboardClient() {
             </table>
           </div>
         </div>
-      </div>
 
-      {openAdminCountModal && (
+        {openAdminCountModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
             <div className="p-6 border-b border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-900">Set Admin Customers Today</h3>
+              <h2 className="text-xl font-semibold mb-4">আজকের অ্যাডমিন গ্রাহক সেট করুন</h2>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Showroom</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">শোরুম নির্বাচন করুন</label>
                 <select
                   value={selectedShowroom}
                   onChange={(e) => setSelectedShowroom(e.target.value)}
-                  className="w-full px-4 py-2 border text-black border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {showrooms.map((s) => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
+                  <option value="">সব শোরুম</option>
+                  {showrooms.map((showroom) => (
+                    <option key={showroom.id} value={showroom.name}>
+                      {showroom.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -471,14 +475,14 @@ export default function OfficeDashboardClient() {
                 value={pendingCount}
                 onChange={(e) => setPendingCount(e.target.value)}
                 className="w-full px-4 py-2 border text-black border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter count"
+                placeholder="সংখ্যা লিখুন"
               />
               <div className="flex gap-3">
                 <button
                   onClick={() => setOpenAdminCountModal(false)}
                   className="flex-1 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg"
                 >
-                  Cancel
+                  বাতিল
                 </button>
                 <button
                   disabled={savingCount || !selectedShowroom}
@@ -492,7 +496,7 @@ export default function OfficeDashboardClient() {
                         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                         body: JSON.stringify({ count: Number(pendingCount), showroom: selectedShowroom })
                       });
-                      if (!res.ok) throw new Error('Failed to save');
+                      if (!res.ok) throw new Error('সংরক্ষণ করতে ব্যর্থ হয়েছে');
                       const js = await res.json();
                       setAdminToday(Number(js.count || 0));
                       // refresh today stats
@@ -511,14 +515,14 @@ export default function OfficeDashboardClient() {
                   }}
                   className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
                 >
-                  Save
+                  সংরক্ষণ করুন
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
+      </div>
     </div>
   );
 }

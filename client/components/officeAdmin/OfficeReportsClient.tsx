@@ -33,9 +33,105 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [bn] = useState({
+    reports: 'রিপোর্টসমূহ',
+    showroom: 'শোরুম',
+    selectShowroom: 'শোরুম নির্বাচন করুন',
+    dateRange: 'তারিখের পরিসীমা',
+    from: 'থেকে',
+    to: 'পর্যন্ত',
+    generateReport: 'রিপোর্ট তৈরি করুন',
+    downloadReport: 'রিপোর্ট ডাউনলোড করুন',
+    loading: 'লোড হচ্ছে...',
+    error: 'ত্রুটি',
+    success: 'সফল',
+    warning: 'সতর্কতা',
+    info: 'তথ্য',
+    visitors: 'দর্শনার্থী',
+    accuracy: 'সঠিকতা',
+    performance: 'কর্মক্ষমতা',
+    sales: 'বিক্রয়',
+    noData: 'কোন ডেটা পাওয়া যায়নি',
+    totalVisitors: 'মোট দর্শনার্থী',
+    avgAccuracy: 'গড় সঠিকতা',
+    avgPerformance: 'গড় কর্মক্ষমতা',
+    totalSales: 'মোট বিক্রয়',
+    addSale: 'বিক্রয় যোগ করুন',
+    saleAmount: 'বিক্রয়ের পরিমাণ',
+    saleDate: 'বিক্রয়ের তারিখ',
+    saleNotes: 'নোট',
+    save: 'সংরক্ষণ করুন',
+    cancel: 'বাতিল করুন',
+    day: 'দিন',
+    week: 'সপ্তাহ',
+    month: 'মাস',
+    year: 'বছর',
+    all: 'সব',
+    filter: 'ফিল্টার',
+    apply: 'প্রয়োগ করুন',
+    reset: 'রিসেট করুন',
+    close: 'বন্ধ করুন',
+    selectDate: 'তারিখ নির্বাচন করুন',
+    selectShowroomFirst: 'প্রথমে একটি শোরুম নির্বাচন করুন',
+    invalidDateRange: 'অবৈধ তারিখের পরিসীমা',
+    startDateAfterEndDate: 'শুরুর তারিখ শেষের তারিখের পরে হতে পারবে না',
+    endDateBeforeStartDate: 'শেষের তারিখ শুরুর তারিখের আগে হতে পারবে না',
+    startDateRequired: 'শুরুর তারিখ প্রয়োজন',
+    endDateRequired: 'শেষের তারিখ প্রয়োজন',
+    showroomRequired: 'শোরুম নির্বাচন করুন',
+    amountRequired: 'পরিমাণ প্রয়োজন',
+    dateRequired: 'তারিখ প্রয়োজন',
+    saleAdded: 'বিক্রয় যোগ করা হয়েছে',
+    failedToAddSale: 'বিক্রয় যোগ করতে ব্যর্থ হয়েছে',
+    failedToLoadShowrooms: 'শোরুম লোড করতে ব্যর্থ হয়েছে',
+    failedToLoadData: 'ডেটা লোড করতে ব্যর্থ হয়েছে',
+    noDataAvailable: 'কোন ডেটা পাওয়া যায়নি',
+    loadingData: 'ডেটা লোড হচ্ছে...',
+    generatingReport: 'রিপোর্ট তৈরি করা হচ্ছে...',
+    reportGenerated: 'রিপোর্ট তৈরি করা হয়েছে',
+    failedToGenerateReport: 'রিপোর্ট তৈরি করতে ব্যর্থ হয়েছে',
+    downloadStarted: 'ডাউনলোড শুরু হয়েছে',
+    failedToDownload: 'ডাউনলোড করতে ব্যর্থ হয়েছে',
+    noDataToDownload: 'ডাউনলোডের জন্য কোন ডেটা নেই',
+    noDataToShow: 'দেখানোর জন্য কোন ডেটা নেই',
+    noDataForSelectedRange: 'নির্বাচিত পরিসীমায় কোন ডেটা নেই',
+    noDataForSelectedShowroom: 'নির্বাচিত শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedDate: 'নির্বাচিত তারিখের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilter: 'নির্বাচিত ফিল্টারের জন্য কোন ডেটা নেই',
+    noDataForSelectedCategory: 'নির্বাচিত বিভাগের জন্য কোন ডেটা নেই',
+    noDataForSelectedStatus: 'নির্বাচিত স্ট্যাটাসের জন্য কোন ডেটা নেই',
+    noDataForSelectedUser: 'নির্বাচিত ব্যবহারিকরীর জন্য কোন ডেটা নেই',
+    noDataForSelectedCustomer: 'নির্বাচিত গ্রাহকের জন্য কোন ডেটা নেই',
+    noDataForSelectedProduct: 'নির্বাচিত পণ্যের জন্য কোন ডেটা নেই',
+    noDataForSelectedService: 'নির্বাচিত সেবার জন্য কোন ডেটা নেই',
+    noDataForSelectedLocation: 'নির্বাচিত অবস্থানের জন্য কোন ডেটা নেই',
+    noDataForSelectedBranch: 'নির্বাচিত শাখার জন্য কোন ডেটা নেই',
+    noDataForSelectedDepartment: 'নির্বাচিত বিভাগের জন্য কোন ডেটা নেই',
+    noDataForSelectedEmployee: 'নির্বাচিত কর্মচারীর জন্য কোন ডেটা নেই',
+    noDataForSelectedVendor: 'নির্বাচিত বিক্রেতার জন্য কোন ডেটা নেই',
+    noDataForSelectedSupplier: 'নির্বাচিত সরবরাহকারীর জন্য কোন ডেটা নেই',
+    noDataForSelectedCategoryAndDate: 'নির্বাচিত বিভাগ এবং তারিখের জন্য কোন ডেটা নেই',
+    noDataForSelectedCategoryAndShowroom: 'নির্বাচিত বিভাগ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedDateAndShowroom: 'নির্বাচিত তারিখ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedCategoryAndDateAndShowroom: 'নির্বাচিত বিভাগ, তারিখ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndDate: 'নির্বাচিত ফিল্টার এবং তারিখের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndShowroom: 'নির্বাচিত ফিল্টার এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndDateAndShowroom: 'নির্বাচিত ফিল্টার, তারিখ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndCategory: 'নির্বাচিত ফিল্টার এবং বিভাগের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndCategoryAndDate: 'নির্বাচিত ফিল্টার, বিভাগ এবং তারিখের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndCategoryAndShowroom: 'নির্বাচিত ফিল্টার, বিভাগ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndCategoryAndDateAndShowroom: 'নির্বাচিত ফিল্টার, বিভাগ, তারিখ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatus: 'নির্বাচিত ফিল্টার এবং স্ট্যাটাসের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatusAndDate: 'নির্বাচিত ফিল্টার, স্ট্যাটাস এবং তারিখের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatusAndShowroom: 'নির্বাচিত ফিল্টার, স্ট্যাটাস এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatusAndDateAndShowroom: 'নির্বাচিত ফিল্টার, স্ট্যাটাস, তারিখ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatusAndCategory: 'নির্বাচিত ফিল্টার, স্ট্যাটাস এবং বিভাগের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatusAndCategoryAndDate: 'নির্বাচিত ফিল্টার, স্ট্যাটাস, বিভাগ এবং তারিখের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatusAndCategoryAndShowroom: 'নির্বাচিত ফিল্টার, স্ট্যাটাস, বিভাগ এবং শোরুমের জন্য কোন ডেটা নেই',
+    noDataForSelectedFilterAndStatusAndCategoryAndDateAndShowroom: 'নির্বাচিত ফিল্টার, স্ট্যাটাস, বিভাগ, তারিখ এবং শোরুমের জন্য কোন ডেটা নেই',
+  });
   const [data, setData] = useState<ChartData[]>([]);
   const [reportRows, setReportRows] = useState<Array<{ showroom: string; category: string; customerCount: number; feedbackCount: number }>>([]);
-  const [autoGenerated, setAutoGenerated] = useState(false);
   const [backendStats, setBackendStats] = useState<null | { totalVisitors: number; avgAccuracy: number; avgPerformance: number }>(null);
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
   const [saleAmount, setSaleAmount] = useState<string>("");
@@ -80,11 +176,9 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
   }, []);
 
   useEffect(() => {
-    if (!autoGenerated && selectedShowroom && startDate && endDate) {
+    if (selectedShowroom && startDate && endDate) {
       handleGenerateReport();
-      setAutoGenerated(true);
     }
-
   }, [selectedShowroom, startDate, endDate]);
 
   const currentShowroomData = useMemo(() => {
@@ -364,7 +458,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
         setShowToast(true);
       })
       .catch(() => {
-        setToastMessage('Failed to load PDF exporter');
+        setToastMessage('পিডিএফ এক্সপোর্টার লোড করতে ব্যর্থ হয়েছে');
         setShowToast(true);
       });
   };
@@ -373,19 +467,19 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
     <div className="min-h-screen p-8 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="mb-10">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Reports</h1>
-          <p className="text-slate-600 text-lg">Generate and analyze showroom performance reports</p>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">রিপোর্টসমূহ</h1>
+          <p className="text-slate-600 text-lg">শোরুম পারফরম্যান্স রিপোর্ট তৈরি ও বিশ্লেষণ করুন</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 mb-10">
           <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
             <Filter size={20} />
-            Filters
+            ফিল্টার
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
-              <label htmlFor={`${showroomUid}-showroom`} className="block text-sm font-bold text-slate-900 mb-3">Select Showroom</label>
+              <label htmlFor={`${showroomUid}-showroom`} className="block text-sm font-bold text-slate-900 mb-3">শোরুম নির্বাচন করুন</label>
               <select
                 id={`${showroomUid}-showroom`}
                 name="showroom"
@@ -393,7 +487,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
                 onChange={(e) => setSelectedShowroom(e.target.value)}
                 className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 transition bg-white text-slate-900 font-medium"
               >
-                <option value="">Select a showroom</option>
+                <option value="">একটি শোরুম নির্বাচন করুন</option>
                 {showrooms.map((name) => (
                   <option key={name} value={name}>
                     {name}
@@ -405,7 +499,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
             <div>
               <label htmlFor={`${startUid}-start`} className="block text-sm font-bold text-slate-900 mb-3">
                 <Calendar size={16} className="inline mr-2" />
-                Start Date
+                শুরুর তারিখ
               </label>
               <input
                 type="date"
@@ -420,7 +514,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
             <div>
               <label htmlFor={`${endUid}-end`} className="block text-sm font-bold text-slate-900 mb-3">
                 <Calendar size={16} className="inline mr-2" />
-                End Date
+                শেষ তারিখ
               </label>
               <input
                 type="date"
@@ -432,36 +526,26 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
               />
             </div>
 
-            <button
-              name="generateReport"
-              onClick={handleGenerateReport}
-              disabled={isGenerating || !selectedShowroom || !startDate || !endDate}
-              className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition text-sm"
-            >
-              <FileText size={16} />
-              {isGenerating ? 'Generating...' : 'Generate'}
-            </button>
-
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-end md:justify-start">
               <button
                 name="downloadExcel"
                 onClick={handleDownloadExcel}
                 disabled={!data.length}
-                className="flex-1 px-3 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-1 transition text-sm"
-                title="Download Excel"
+                className="px-3 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-1 transition text-sm min-w-[90px]"
+                title="এক্সেল ডাউনলোড করুন"
               >
                 <Download size={16} />
-                Excel
+                এক্সেল
               </button>
               <button
                 name="downloadPdf"
                 onClick={handleDownloadPDF}
                 disabled={!data.length}
-                className="flex-1 px-3 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-1 transition text-sm"
-                title="Download PDF"
+                className="px-3 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-1 transition text-sm min-w-[90px]"
+                title="পিডিএফ ডাউনলোড করুন"
               >
                 <Download size={16} />
-                PDF
+                পিডিএফ
               </button>
               {(['admin', 'officeAdmin', 'showroom'].includes(role)) && (
                 <button
@@ -475,10 +559,10 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
                     setIsSaleModalOpen(true);
                   }}
                   disabled={!selectedShowroom}
-                  className="flex-1 px-3 py-3 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-1 transition text-sm"
-                  title="Add Sale"
+                  className="px-3 py-3 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-1 transition text-sm min-w-[110px]"
+                  title="বিক্রয় যোগ করুন"
                 >
-                  Add Sale
+                  বিক্রয় যোগ করুন
                 </button>
               )}
             </div>
@@ -488,19 +572,19 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Visitors</p>
+              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">মোট দর্শনার্থী</p>
               <p className="text-3xl font-bold text-slate-900">{stats.totalVisitors}</p>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Avg Accuracy</p>
+              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">গড় সঠিকতা</p>
               <p className="text-3xl font-bold text-emerald-600">{stats.avgAccuracy}%</p>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Avg Performance</p>
+              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">গড় পারফরম্যান্স</p>
               <p className="text-3xl font-bold text-blue-600">{stats.avgPerformance}%</p>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Sales</p>
+              <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">মোট বিক্রয়</p>
               <p className="text-3xl font-bold text-purple-600">${stats.totalSales}</p>
             </div>
           </div>
@@ -509,7 +593,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
         {currentShowroomData && currentShowroomData.data?.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Visitors Trend</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-6">দর্শনার্থীর প্রবণতা</h3>
               <ResponsiveContainer width="100%" height={350}>
                 <LineChart data={reversedChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -535,7 +619,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Performance %</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-6">পারফরম্যান্স %</h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={reversedChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -564,7 +648,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Accuracy %</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-6">সঠিকতা %</h3>
               <ResponsiveContainer width="100%" height={350}>
                 <LineChart data={reversedChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -590,7 +674,7 @@ export default function OfficeReportsClient({ initialShowrooms, initialSelectedS
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Sales</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-6">বিক্রয়</h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={reversedChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />

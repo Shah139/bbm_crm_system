@@ -57,7 +57,7 @@ export default function MessageSettingsClient() {
     e.preventDefault();
 
     if (!formData.smsApiKey || !formData.smsProvider) {
-      setToastMessage('Please select a provider and enter API key');
+      setToastMessage('অনুগ্রহ করে প্রোভাইডার নির্বাচন করুন এবং API কী লিখুন');
       setShowToast(true);
       return;
     }
@@ -78,7 +78,7 @@ export default function MessageSettingsClient() {
           feedbackUrl: formData.feedbackUrl,
         }),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) throw new Error('সংরক্ষণ ব্যর্থ হয়েছে');
       const data = await res.json();
       const s = data?.settings || {};
       setFormData({
@@ -87,10 +87,10 @@ export default function MessageSettingsClient() {
         smsSenderId: s.smsSenderId || formData.smsSenderId,
         feedbackUrl: s.feedbackUrl || formData.feedbackUrl,
       });
-      setToastMessage('SMS settings saved successfully!');
+      setToastMessage('SMS সেটিংস সফলভাবে সংরক্ষণ হয়েছে!');
       setShowToast(true);
     } catch (error) {
-      setToastMessage('Failed to save settings. Please try again.');
+      setToastMessage('সেটিংস সংরক্ষণ করা যায়নি, আবার চেষ্টা করুন।');
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -101,13 +101,13 @@ export default function MessageSettingsClient() {
     e.preventDefault();
 
     if (!testPhoneNumber) {
-      setToastMessage('Please enter a phone number');
+      setToastMessage('অনুগ্রহ করে একটি ফোন নম্বর লিখুন');
       setShowToast(true);
       return;
     }
 
     if (!formData.smsApiKey || !formData.smsProvider) {
-      setToastMessage('Please save SMS settings first');
+      setToastMessage('অনুগ্রহ করে আগে SMS সেটিংস সংরক্ষণ করুন');
       setShowToast(true);
       return;
     }
@@ -115,12 +115,12 @@ export default function MessageSettingsClient() {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      setToastMessage(`Test SMS sent successfully to ${testPhoneNumber}!`);
+      setToastMessage(`টেস্ট SMS সফলভাবে পাঠানো হয়েছে: ${testPhoneNumber}`);
       setShowToast(true);
       setTestPhoneNumber('');
       setShowTestModal(false);
     } catch (error) {
-      setToastMessage('Failed to send test SMS. Please try again.');
+      setToastMessage('টেস্ট SMS পাঠানো যায়নি, আবার চেষ্টা করুন।');
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -131,52 +131,52 @@ export default function MessageSettingsClient() {
     <div className="min-h-screen p-8 bg-white">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">SMS Gateway Settings</h1>
-          <p className="text-gray-600">Configure your SMS gateway credentials and settings</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">SMS গেটওয়ে সেটিংস</h1>
+          <p className="text-gray-600">আপনার SMS গেটওয়ের তথ্য এবং সেটিংস কনফিগার করুন</p>
         </div>
 
         <div className="bg-white rounded-lg shadow p-8">
           <form onSubmit={handleSaveSettings} className="space-y-6">
             <div>
-              <label htmlFor="smsApiKey" className="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+              <label htmlFor="smsApiKey" className="block text-sm font-medium text-gray-700 mb-2">API কী</label>
               <div className="relative">
-                <input type={showApiKey ? 'text' : 'password'} name="smsApiKey" id="smsApiKey" value={formData.smsApiKey} onChange={handleInputChange} placeholder="Enter your SMS gateway API key" className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
-                <button type="button" onClick={() => setShowApiKey(!showApiKey)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition" aria-label={showApiKey ? 'Hide API key' : 'Show API key'}>
+                <input type={showApiKey ? 'text' : 'password'} name="smsApiKey" id="smsApiKey" value={formData.smsApiKey} onChange={handleInputChange} placeholder="আপনার SMS গেটওয়ে API কী লিখুন" className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
+                <button type="button" onClick={() => setShowApiKey(!showApiKey)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition" aria-label={showApiKey ? 'API কী লুকান' : 'API কী দেখুন'}>
                   {showApiKey ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Your API key is encrypted and secure</p>
+              <p className="text-xs text-gray-500 mt-1">আপনার API কী এনক্রিপ্টেড এবং নিরাপদভাবে সংরক্ষিত</p>
             </div>
 
             <div>
-              <label htmlFor="smsSenderId" className="block text-sm font-medium text-gray-700 mb-2">Sender ID</label>
-              <input type="text" name="smsSenderId" id="smsSenderId" value={formData.smsSenderId} onChange={handleInputChange} placeholder="e.g., YourBrand or 1234" className="w-full px-4 py-3 border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
-              <p className="text-xs text-gray-500 mt-1">The sender ID that will appear on SMS messages</p>
+              <label htmlFor="smsSenderId" className="block text-sm font-medium text-gray-700 mb-2">সেন্ডার আইডি</label>
+              <input type="text" name="smsSenderId" id="smsSenderId" value={formData.smsSenderId} onChange={handleInputChange} placeholder="যেমন, YourBrand বা 1234" className="w-full px-4 py-3 border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
+              <p className="text-xs text-gray-500 mt-1">SMS মেসেজে যেই সেন্ডার নাম/নম্বার দেখা যাবে</p>
             </div>
 
             <div>
-              <label htmlFor="feedbackUrl" className="block text-sm font-medium text-gray-700 mb-2">Feedback URL</label>
-              <input type="url" name="feedbackUrl" id="feedbackUrl" value={formData.feedbackUrl} onChange={handleInputChange} placeholder="e.g., https://yourapp.com/user/feedback" className="w-full px-4 py-3 border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
-              <p className="text-xs text-gray-500 mt-1">Link used in SMS for collecting customer feedback</p>
+              <label htmlFor="feedbackUrl" className="block text-sm font-medium text-gray-700 mb-2">ফিডব্যাক URL</label>
+              <input type="url" name="feedbackUrl" id="feedbackUrl" value={formData.feedbackUrl} onChange={handleInputChange} placeholder="যেমন, https://yourapp.com/user/feedback" className="w-full px-4 py-3 border border-gray-300 text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
+              <p className="text-xs text-gray-500 mt-1">গ্রাহকের ফিডব্যাক নেওয়ার জন্য SMS এ যে লিংক পাঠানো হবে</p>
             </div>
 
             <div className="flex flex-col md:flex-row gap-3 md:gap-4 pt-6 border-t border-gray-200">
               <button type="button" onClick={() => setShowTestModal(true)} disabled={isLoading} className="w-full md:w-auto flex justify-center items-center text-sm gap-2 px-4 py-2 md:px-6 md:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors font-medium">
                 <Send size={24} />
-                Test SMS
+                টেস্ট SMS পাঠান
               </button>
 
-              <button type="submit" disabled={isLoading} className="w-full md:w-auto inline-flex justify-center items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 text-white rounded-lg transition-colors font-medium">
+              <button type="submit" disabled={isLoading} className="w-full md:w-auto inline-flex justify_center items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 text-white rounded-lg transition-colors font-medium">
                 <Save size={24} />
-                {isLoading ? 'Saving...' : 'Save Settings'}
+                {isLoading ? 'সংরক্ষণ হচ্ছে...' : 'সেটিংস সংরক্ষণ করুন'}
               </button>
             </div>
           </form>
         </div>
 
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">Need Help?</h3>
-          <p className="text-sm text-blue-800">To get your SMS gateway credentials, visit your SMS provider's dashboard and navigate to the API settings section. Make sure to copy your API key and endpoint URL correctly.</p>
+          <h3 className="text-sm font-semibold text-blue-900 mb-2">সহায়তা প্রয়োজন?</h3>
+          <p className="text-sm text-blue-800">আপনার SMS গেটওয়ে ক্রেডেনশিয়াল পেতে, SMS প্রোভাইডারের ড্যাশবোর্ডে গিয়ে API সেটিংস সেকশন এ যান। সেখান থেকে সঠিকভাবে আপনার API কী এবং এন্ডপয়েন্ট URL কপি করুন।</p>
         </div>
       </div>
 
@@ -189,21 +189,21 @@ export default function MessageSettingsClient() {
               </svg>
             </button>
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">Send Test SMS</h2>
-            <p className="text-gray-600 text-sm mb-6">Enter a phone number to send a test SMS message</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">টেস্ট SMS পাঠান</h2>
+            <p className="text-gray-600 text-sm mb-6">একটি ফোন নম্বর লিখে টেস্ট SMS পাঠান</p>
 
             <form onSubmit={handleTestSMS} className="space-y-4">
               <div>
-                <label htmlFor="testPhoneNumber" className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input type="tel" id="testPhoneNumber" name="testPhoneNumber" value={testPhoneNumber} onChange={(e) => setTestPhoneNumber(e.target.value)} placeholder="e.g., +1234567890 or 1234567890" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
-                <p className="text-xs text-gray-500 mt-1">Include country code for international numbers</p>
+                <label htmlFor="testPhoneNumber" className="block text-sm font-medium text-gray-700 mb-2">ফোন নম্বর</label>
+                <input type="tel" id="testPhoneNumber" name="testPhoneNumber" value={testPhoneNumber} onChange={(e) => setTestPhoneNumber(e.target.value)} placeholder="যেমন, +8801XXXXXXXXX বা 01XXXXXXXXX" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
+                <p className="text-xs text-gray-500 mt-1">আন্তর্জাতিক নম্বরের ক্ষেত্রে দেশের কোডসহ লিখুন</p>
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowTestModal(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">Cancel</button>
+                <button type="button" onClick={() => setShowTestModal(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">বাতিল</button>
                 <button type="submit" disabled={isLoading} className="flex-1 px-4 py-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 text-white rounded-lg transition-colors font-medium inline-flex items-center justify-center gap-2">
                   <Send size={16} />
-                  {isLoading ? 'Sending...' : 'Send Test'}
+                  {isLoading ? 'পাঠানো হচ্ছে...' : 'টেস্ট পাঠান'}
                 </button>
               </div>
             </form>

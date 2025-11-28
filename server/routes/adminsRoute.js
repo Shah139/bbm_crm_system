@@ -91,6 +91,12 @@ const requireOfficeAdmin = (req, res, next) => {
   next();
 };
 
+const requireAdminOrOfficeAdmin = (req, res, next) => {
+  const role = req.user?.role;
+  if (role === "admin" || role === "officeAdmin") return next();
+  return res.status(403).json({ message: "Forbidden" });
+};
+
 const requireFeedbackAccess = (req, res, next) => {
   const role = req.user?.role;
   if (role === "admin" || role === "officeAdmin" || role === "showroom") return next();
@@ -129,8 +135,8 @@ router.post("/feedback", createFeedback);
 
 router.get("/feedbacks", requireAuth, requireFeedbackAccess, setPrivateShortCache, listFeedbacks);
 
-router.put("/feedbacks/:id/status", requireAuth, requireAdmin, updateFeedbackStatus);
-router.delete("/feedbacks/:id", requireAuth, requireAdmin, deleteFeedback);
+router.put("/feedbacks/:id/status", requireAuth, requireAdminOrOfficeAdmin, updateFeedbackStatus);
+router.delete("/feedbacks/:id", requireAuth, requireAdminOrOfficeAdmin, deleteFeedback);
 
 router.post("/showroom/customers", requireAuth, requireFeedbackAccess, createShowroomCustomer);
 

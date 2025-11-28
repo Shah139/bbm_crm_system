@@ -93,7 +93,7 @@ export default function AdminDashboardBodyClient() {
       } catch (e: any) {
 
         if (e?.message && !e.message.includes("401")) {
-          setError(e?.message || "Failed to load dashboard data");
+          setError(e?.message || "ড্যাশবোর্ডের ডেটা লোড করতে ব্যর্থ হয়েছে");
         }
       }
     };
@@ -133,7 +133,7 @@ export default function AdminDashboardBodyClient() {
       .slice(0, 4)
       .map((c, i) => ({
         id: i + 1,
-        event: `New customer visit at ${c.showroomBranch || "Showroom"}`,
+        event: `${c.showroomBranch || "শোরুম"} এ নতুন গ্রাহক ভিজিট`,
         time: new Date(c.createdAt).toLocaleString("en-US", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
         icon: "\uD83D\uDC65",
       }));
@@ -143,7 +143,7 @@ export default function AdminDashboardBodyClient() {
       .slice(0, 4)
       .map((f, i) => ({
         id: String(f._id || f.id || i),
-        user: (f as any).name || "Anonymous",
+        user: (f as any).name || "অজানা",
         comment: f.message || "",
         color: COLORS[i % COLORS.length].replace("#", "bg-") || "bg-blue-500",
       }));
@@ -156,9 +156,9 @@ export default function AdminDashboardBodyClient() {
       <DashboardChartsClient activityData={activityData} interestData={interestData} />
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
         <div className="bg-white rounded-xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Recent Activities</h2>
-            <a href="/admin/reports" className="text-sm text-blue-600 hover:text-blue-800">See All</a>
+          <div className="flex justify_between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-900">সাম্প্রতিক কার্যক্রম</h2>
+            <a href="/admin/reports" className="text-sm p-2 text-blue-600 hover:text-blue-800">সব দেখুন</a>
           </div>
           <div className="space-y-4">
             {recentActivities.map((item) => (
@@ -176,9 +176,9 @@ export default function AdminDashboardBodyClient() {
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Feedbacks Overview</h2>
-            <a href="/admin/feedbacks" className="text-sm text-blue-600 hover:text-blue-800">See All</a>
+          <div className="flex justify_between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-900">ফিডব্যাক সারাংশ</h2>
+            <a href="/admin/feedbacks" className="text-sm p-2 text-blue-600 hover:text-blue-800">সব দেখুন</a>
           </div>
           <div className="space-y-4">
             {feedbackList.map((fb) => (

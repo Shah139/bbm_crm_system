@@ -48,7 +48,7 @@ export default function ShowroomActivityPage() {
     const load = async () => {
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (!token) throw new Error('Not authenticated');
+        if (!token) throw new Error('অনুগ্রহ করে লগইন করুন');
         const params = new URLSearchParams();
         params.set('ts', String(Date.now()));
         const [custRes, summaryRes] = await Promise.all([
@@ -63,8 +63,8 @@ export default function ShowroomActivityPage() {
           }),
         ]);
 
-        if (!custRes.ok) throw new Error('Failed to load customers');
-        if (!summaryRes.ok) throw new Error('Failed to load showroom summary');
+        if (!custRes.ok) throw new Error('গ্রাহকের তথ্য লোড করতে ব্যর্থ হয়েছে');
+        if (!summaryRes.ok) throw new Error('শোরুম সামারি লোড করতে ব্যর্থ হয়েছে');
 
         const [custData, summaryData] = await Promise.all([
           custRes.json(),
@@ -77,7 +77,7 @@ export default function ShowroomActivityPage() {
         const items = Array.isArray(summaryData.items) ? summaryData.items : [];
 
         const mapped: ShowroomActivity[] = items.map((it: any, idx: number) => {
-          const showroomName = it.showroom || 'Unknown';
+          const showroomName = it.showroom || 'অজানা শোরুম';
           return {
           id: idx + 1,
           showroomName,
@@ -90,7 +90,7 @@ export default function ShowroomActivityPage() {
         });
         setShowroomData(mapped);
       } catch (e: any) {
-        setToastMessage(e?.message || 'Failed to load showroom summary');
+        setToastMessage(e?.message || 'শোরুম সামারি লোড করতে সমস্যা হয়েছে');
         setShowToast(true);
       }
     };
@@ -134,10 +134,10 @@ export default function ShowroomActivityPage() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    if (diffMins < 1) return 'এইমাত্র';
+    if (diffMins < 60) return `${diffMins} মিনিট আগে`;
+    if (diffHours < 24) return `${diffHours} ঘন্টা আগে`;
+    return `${diffDays} দিন আগে`;
   };
 
   return (
@@ -145,8 +145,8 @@ export default function ShowroomActivityPage() {
       <div className="max-w-7xl mx-auto">
         { }
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Showroom Activity</h1>
-          <p className="text-gray-600">Monitor showroom performance and visitor metrics</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">শোরুম কার্যক্রম</h1>
+          <p className="text-gray-600">শোরুমের পারফরম্যান্স ও ভিজিটর মেট্রিক্স মনিটর করুন</p>
         </div>
 
         { }
@@ -155,7 +155,7 @@ export default function ShowroomActivityPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-600 mb-1">Total Customers</h3>
+                <h3 className="text-sm font-medium text-gray-600 mb-1">মোট গ্রাহক</h3>
                 <p className="text-3xl font-bold text-gray-900">{stats.totalVisitors}</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -168,7 +168,7 @@ export default function ShowroomActivityPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-600 mb-1">Average Performance</h3>
+                <h3 className="text-sm font-medium text-gray-600 mb-1">গড় পারফরম্যান্স</h3>
                 <p className="text-3xl font-bold text-gray-900">{stats.avgAccuracy}%</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
@@ -181,7 +181,7 @@ export default function ShowroomActivityPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-600 mb-1">Active Showrooms</h3>
+                <h3 className="text-sm font-medium text-gray-600 mb-1">সক্রিয় শোরুম</h3>
                 <p className="text-3xl font-bold text-gray-900">
                   {stats.activeShowrooms}/{showroomData.length}
                 </p>
@@ -200,7 +200,7 @@ export default function ShowroomActivityPage() {
             <div>
               <input
                 type="text"
-                placeholder="Search showrooms..."
+                placeholder="শোরুম খুঁজুন..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition"
@@ -214,9 +214,9 @@ export default function ShowroomActivityPage() {
                 onChange={(e) => setSortBy(e.target.value as 'visitors' | 'accuracy' | 'name')}
                 className="w-full px-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition"
               >
-                <option value="visitors">Sort by: Daily Visitors</option>
-                <option value="accuracy">Sort by: Accuracy</option>
-                <option value="name">Sort by: Name</option>
+                <option value="visitors">সোর্ট করুন: দৈনিক ভিজিটর</option>
+                <option value="accuracy">সোর্ট করুন: পারফরম্যান্স</option>
+                <option value="name">সোর্ট করুন: নাম</option>
               </select>
             </div>
           </div>
@@ -237,19 +237,19 @@ export default function ShowroomActivityPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Showroom Name
+                    শোরুমের নাম
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Daily Visitors
+                    দৈনিক ভিজিটর
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Performance
+                    পারফরম্যান্স
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Last Activity
+                    সর্বশেষ কার্যক্রম
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                    Status
+                    স্ট্যাটাস
                   </th>
                 </tr>
               </thead>
@@ -308,7 +308,7 @@ export default function ShowroomActivityPage() {
                 ) : (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                      No showrooms found matching your search
+                      আপনার অনুসন্ধানের সাথে মিলিয়ে কোন শোরুম পাওয়া যায়নি
                     </td>
                   </tr>
                 )}
@@ -321,7 +321,7 @@ export default function ShowroomActivityPage() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           { }
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4">Highest Performance</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">সর্বোচ্চ পারফরম্যান্স</h3>
             {showroomData.length > 0 && (
               <div>
                 <p className="text-lg font-bold text-gray-900">
@@ -336,14 +336,14 @@ export default function ShowroomActivityPage() {
 
           { }
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4">Most Visitors</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">সর্বাধিক ভিজিটর</h3>
             {showroomData.length > 0 && (
               <div>
                 <p className="text-lg font-bold text-gray-900">
                   {showroomData.reduce((max, s) => (s.dailyVisitors > max.dailyVisitors ? s : max)).showroomName}
                 </p>
                 <p className="text-2xl font-bold text-blue-600 mt-1">
-                  {Math.max(...showroomData.map((s) => s.dailyVisitors))} visitors
+                  {Math.max(...showroomData.map((s) => s.dailyVisitors))} জন ভিজিটর
                 </p>
               </div>
             )}

@@ -71,7 +71,7 @@ export default function ReportsClient() {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       console.log('Auth state:', { hasToken: !!token });
-      if (!token) throw new Error('Not authenticated');
+      if (!token) throw new Error('অনুগ্রহ করে লগইন করুন');
       const now = new Date();
       let from: Date; let to: Date = new Date();
       if (dateRange === 'last30') {
@@ -160,10 +160,10 @@ export default function ReportsClient() {
       const currentSet = new Set(currentNames.map(s => s.trim().toLowerCase()));
       const filtered = mappedAll.filter(it => currentSet.has((it.showroom || '').trim().toLowerCase()));
       setAllData(filtered);
-      setToastMessage('Report generated successfully!');
+      setToastMessage('রিপোর্ট সফলভাবে তৈরি হয়েছে');
       setShowToast(true);
     } catch (error: any) {
-      setToastMessage(error?.message || 'Failed to generate report');
+      setToastMessage(error?.message || 'রিপোর্ট তৈরি করতে ব্যর্থ হয়েছে');
       setShowToast(true);
     } finally {
       setIsGenerating(false);
@@ -214,7 +214,7 @@ export default function ReportsClient() {
 
         const token = localStorage.getItem('token');
         if (!token) {
-          setToastMessage('Please log in again');
+          setToastMessage('অনুগ্রহ করে আবার লগইন করুন');
           setShowToast(true);
           return;
         }
@@ -227,7 +227,7 @@ export default function ReportsClient() {
 
       } catch (error: any) {
         console.error('Failed to initialize reports:', error);
-        setToastMessage(error?.message || 'Failed to load initial report data');
+        setToastMessage(error?.message || 'প্রাথমিক রিপোর্ট ডেটা লোড করতে ব্যর্থ হয়েছে');
         setShowToast(true);
       } finally {
         setIsGenerating(false);
@@ -327,12 +327,12 @@ export default function ReportsClient() {
   const handleDeleteShowroom = async (name: string) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      if (!token) throw new Error('Not authenticated');
+      if (!token) throw new Error('অনুগ্রহ করে লগইন করুন');
       const showroomKey = name.trim().toLowerCase();
       const fallback = adminShowrooms.find(s => s.name.trim().toLowerCase() === showroomKey)?.id || '';
       const showroomId = adminShowroomIdByName[showroomKey] || fallback;
       if (!showroomId) {
-        setToastMessage('This showroom is not in the managed Showrooms list, so it cannot be deleted.');
+        setToastMessage('এই শোরুমটি ম্যানেজড শোরুম তালিকায় নেই, তাই এটি মুছতে পারবেন না।');
         setShowToast(true);
         return;
       }
@@ -340,7 +340,7 @@ export default function ReportsClient() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to delete showroom');
+      if (!res.ok) throw new Error('শোরুম মুছতে ব্যর্থ হয়েছে');
       setDeleteConfirmId(null);
 
       try {
@@ -360,10 +360,10 @@ export default function ReportsClient() {
         }
       } catch { }
       await handleGenerateReport();
-      setToastMessage('Showroom deleted successfully!');
+      setToastMessage('শোরুম সফলভাবে মুছে ফেলা হয়েছে');
       setShowToast(true);
     } catch (err: any) {
-      setToastMessage(err?.message || 'Failed to delete showroom');
+      setToastMessage(err?.message || 'শোরুম মুছতে সমস্যা হয়েছে');
       setShowToast(true);
     }
   };
@@ -402,38 +402,38 @@ export default function ReportsClient() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports</h1>
-            <p className="text-gray-600">View and analyze showroom performance data</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">রিপোর্টসমূহ</h1>
+            <p className="text-gray-600">শোরুম পারফরম্যান্স ডেটা দেখুন ও বিশ্লেষণ করুন</p>
           </div>
           <button onClick={() => { setEditingId(null); setEditingOriginalName(null); setFormData({ name: '', customerCount: '', feedbackCount: '', performancePercentage: '' }); setIsModalOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium">
-            <Plus className="w-5 h-5" />
-            Add Showroom
+            <Plus className="w-5 হ-5" />
+            শোরুম যোগ করুন
           </button>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2"><Calendar size={16} className="inline mr-2" />Date Range</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2"><Calendar size={16} className="inline mr-2" />তারিখের পরিসর</label>
               <select value={dateRange} onChange={(e) => setDateRange(e.target.value as 'last30' | 'thisMonth' | 'lastMonth' | 'yesterday' | 'today')} className="w-full px-3 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="last30">Last 30 Days</option>
-                <option value="thisMonth">This Month</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="today">Today</option>
+                <option value="last30">শেষ ৩০ দিন</option>
+                <option value="thisMonth">এই মাস</option>
+                <option value="lastMonth">গত মাস</option>
+                <option value="yesterday">গতকাল</option>
+                <option value="today">আজ</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Showroom</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">শোরুম</label>
               <select value={selectedShowroom} onChange={(e) => setSelectedShowroom(e.target.value)} className="w-full px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="all">All Showrooms</option>
+                <option value="all">সব শোরুম</option>
                 {showrooms.map((s) => (<option key={s} value={s}>{s}</option>))}
               </select>
             </div>
             <div>
-              <label className="block text-sm  font-medium text-gray-700 mb-2">Category</label>
+              <label className="block text-sm  font-medium text-gray-700 mb-2">ক্যাটাগরি</label>
               <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="all">All Categories</option>
+                <option value="all">সব ক্যাটাগরি</option>
                 {categories.map((c) => (<option key={c} value={c}>{c}</option>))}
               </select>
             </div>
@@ -444,21 +444,21 @@ export default function ReportsClient() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="p-6 border-b border-gray-200  flex justify-between items-center">
-                <h2 className="hidden md:block text-xl  font-bold text-gray-900">Showroom Performance</h2>
+                <h2 className="hidden md:block text-xl  font-bold text-gray-900">শোরুম পারফরম্যান্স</h2>
                 <div className="flex gap-3">
-                  <button onClick={handleExcelExport} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"><Download size={18} />Excel</button>
-                  <button onClick={handlePdfExport} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"><Download size={18} />PDF</button>
+                  <button onClick={handleExcelExport} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"><Download size={18} />এক্সেল</button>
+                  <button onClick={handlePdfExport} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"><Download size={18} />পিডিএফ</button>
                 </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Showroom Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Customer Count</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Feedback Count</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Performance %</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">শোরুমের নাম</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">গ্রাহক সংখ্যা</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ফিডব্যাক সংখ্যা</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">পারফরম্যান্স %</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">অ্যাকশন</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -484,10 +484,10 @@ export default function ReportsClient() {
                                         <button onClick={() => setDeleteConfirmId(deleteConfirmId === item.showroom ? null : item.showroom)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete showroom"><Trash2 size={18} /></button>
                                         {deleteConfirmId === item.showroom && (
                                           <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10 whitespace-nowrap">
-                                            <p className="text-sm font-medium text-gray-900 mb-2">Delete this showroom?</p>
+                                            <p className="text-sm font-medium text-gray-900 mb-2">এই শোরুমটি মুছবেন?</p>
                                             <div className="flex gap-2">
-                                              <button onClick={() => handleDeleteShowroom(item.showroom)} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">Delete</button>
-                                              <button onClick={() => setDeleteConfirmId(null)} className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition">Cancel</button>
+                                              <button onClick={() => handleDeleteShowroom(item.showroom)} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">মুছুন</button>
+                                              <button onClick={() => setDeleteConfirmId(null)} className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition">বাতিল</button>
                                             </div>
                                           </div>
                                         )}
@@ -495,8 +495,8 @@ export default function ReportsClient() {
                                     </>
                                   ) : (
                                     <>
-                                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">Unmanaged</span>
-                                      <button onClick={() => { setEditingId(null); setEditingOriginalName(null); setFormData({ name: item.showroom, customerCount: String(item.customerCount), feedbackCount: String(item.feedbackCount), performancePercentage: String(item.avgPerformance) }); setIsModalOpen(true); }} className="px-2 py-1 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition" title="Add to managed showrooms">Add</button>
+                                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">অনিয়ন্ত্রিত</span>
+                                      <button onClick={() => { setEditingId(null); setEditingOriginalName(null); setFormData({ name: item.showroom, customerCount: String(item.customerCount), feedbackCount: String(item.feedbackCount), performancePercentage: String(item.avgPerformance) }); setIsModalOpen(true); }} className="px-2 py-1 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition" title="ম্যানেজড শোরুমে যোগ করুন">যোগ করুন</button>
                                     </>
                                   )}
                                 </div>
@@ -506,7 +506,7 @@ export default function ReportsClient() {
                         </tr>
                       ))
                     ) : (
-                      <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No data available for the selected filters</td></tr>
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">নির্বাচিত ফিল্টারের জন্য কোন ডেটা নেই</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -515,7 +515,7 @@ export default function ReportsClient() {
           </div>
 
           <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-xl z-20 font-bold text-gray-900 mb-6">Category Interest Ratio</h2>
+            <h2 className="text-xl z-20 font-bold text-gray-900 mb-6">ক্যাটাগরি আগ্রহের অনুপাত</h2>
             {chartData.length > 0 ? (
               <div className="w-full z-20 h-96 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
@@ -550,14 +550,14 @@ export default function ReportsClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center " onClick={() => setIsModalOpen(false)}>
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close modal"><X className="w-5 h-5 text-gray-500" /></button>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">{editingId !== null ? 'Edit Showroom' : 'Add New Showroom'}</h2>
-            <p className="text-gray-600 text-sm mb-6">{editingId !== null ? 'Update the showroom details below' : 'Fill in the showroom details below'}</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">{editingId !== null ? 'শোরুম সম্পাদনা' : 'নতুন শোরুম যোগ করুন'}</h2>
+            <p className="text-gray-600 text-sm mb-6">{editingId !== null ? 'নিচে শোরুমের তথ্য আপডেট করুন' : 'নিচে শোরুমের তথ্য পূরণ করুন'}</p>
             <form onSubmit={async (e) => {
               e.preventDefault();
-              if (!formData.name) { setToastMessage('Please enter showroom name'); setShowToast(true); return; }
+              if (!formData.name) { setToastMessage('অনুগ্রহ করে শোরুমের নাম লিখুন'); setShowToast(true); return; }
               try {
                 const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-                if (!token) throw new Error('Not authenticated');
+                if (!token) throw new Error('অনুগ্রহ করে লগইন করুন');
                 let targetId = editingId;
 
                 if (!targetId && editingOriginalName) {
@@ -583,27 +583,27 @@ export default function ReportsClient() {
 
                 if (targetId) {
                   const res = await fetch(`${baseUrl}/api/user/showrooms/${targetId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ name: formData.name }) });
-                  if (!res.ok) { const t = await res.text(); throw new Error(t || 'Failed to update showroom'); }
+                  if (!res.ok) { const t = await res.text(); throw new Error(t || 'শোরুম আপডেট করতে ব্যর্থ হয়েছে'); }
                 } else {
                   const res = await fetch(`${baseUrl}/api/user/showrooms`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ name: formData.name }) });
-                  if (!res.ok) { const t = await res.text(); throw new Error(t || 'Failed to add showroom'); }
+                  if (!res.ok) { const t = await res.text(); throw new Error(t || 'শোরুম যোগ করতে ব্যর্থ হয়েছে'); }
                 }
                 try { const pub = await fetch(`${baseUrl}/api/user/showrooms-public`); if (pub.ok) { const data = await pub.json(); const names: string[] = (data.showrooms || []).map((s: any) => s.name || s); setShowrooms(names); } } catch { }
                 try { const ts = Date.now(); const res2 = await fetch(`${baseUrl}/api/user/showrooms?ts=${ts}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }); if (res2.ok) { const data2 = await res2.json(); const items: AdminShowroomItem[] = (data2.showrooms || []).map((s: any) => ({ id: String(s.id || s._id), name: s.name || String(s) })); setAdminShowrooms(items); } } catch { }
                 await handleGenerateReport();
-                setToastMessage(targetId ? `Showroom "${formData.name}" updated successfully!` : `Showroom "${formData.name}" added successfully!`);
-              } catch (err: any) { setToastMessage(err?.message || 'Failed to add showroom'); }
+                setToastMessage(targetId ? `"${formData.name}" শোরুম সফলভাবে আপডেট হয়েছে!` : `"${formData.name}" শোরুম সফলভাবে যোগ হয়েছে!`);
+              } catch (err: any) { setToastMessage(err?.message || 'শোরুম যোগ করতে সমস্যা হয়েছে'); }
               finally {
                 setFormData({ name: '', customerCount: '', feedbackCount: '', performancePercentage: '' }); setEditingId(null); setEditingOriginalName(null); setIsModalOpen(false); setShowToast(true);
               }
             }} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Showroom Name</label>
-                <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="e.g., Downtown Showroom" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">শোরুমের নাম</label>
+                <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="যেমন, ডাউনটাউন শোরুম" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition" />
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-gray-900 text-black rounded-lg hover:bg-gray-800 transition-colors font-medium">{editingId !== null ? 'Update Showroom' : 'Add Showroom'}</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">বাতিল</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium">{editingId !== null ? 'শোরুম আপডেট করুন' : 'শোরুম যোগ করুন'}</button>
               </div>
             </form>
           </div>

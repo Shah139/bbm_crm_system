@@ -294,10 +294,10 @@ export default function AdminOverviewCards() {
     })();
 
     return [
-      { title: "Total Customers", value: String(totalCustomers), change: `${customersChange >= 0 ? "+" : ""}${customersChange}%`, lastMonth: "vs Yesterday total", icon: <Users className="w-5 h-5 text-gray-700" /> },
-      { title: "Total Showrooms", value: String(totalShowrooms ?? '-') , change: `${showroomChange >= 0 ? "+" : ""}${showroomChange}%`, lastMonth: "vs Yesterday", icon: <Building2 className="w-5 h-5 text-gray-700" /> },
-      { title: "Today's Visitors", value: String(visitorsToday), change: `${visitorsChange >= 0 ? "+" : ""}${visitorsChange}%`, lastMonth: "vs Yesterday", icon: <UserCheck className="w-5 h-5 text-gray-700" /> },
-      { title: "Overall Performance", value: `${performancePct}%`, change: `${perfDelta >= 0 ? "+" : ""}${perfDelta}%`, lastMonth: "pts vs Yesterday", icon: <TrendingUp className="w-5 h-5 text-gray-700" /> },
+      { title: "মোট গ্রাহক", value: String(totalCustomers), change: `${customersChange >= 0 ? "+" : ""}${customersChange}%`, lastMonth: "গতকালের মোটের সাথে তুলনা", icon: <Users className="w-5 h-5 text-gray-700" /> },
+      { title: "মোট শোরুম", value: String(totalShowrooms ?? '-') , change: `${showroomChange >= 0 ? "+" : ""}${showroomChange}%`, lastMonth: "গতকালের সাথে তুলনা", icon: <Building2 className="w-5 h-5 text-gray-700" /> },
+      { title: "আজকের ভিজিটর", value: String(visitorsToday), change: `${visitorsChange >= 0 ? "+" : ""}${visitorsChange}%`, lastMonth: "গতকালের সাথে তুলনা", icon: <UserCheck className="w-5 h-5 text-gray-700" /> },
+      { title: "সামগ্রিক পারফরম্যান্স", value: `${performancePct}%`, change: `${perfDelta >= 0 ? "+" : ""}${perfDelta}%`, lastMonth: "গতকালের তুলনায় পয়েন্ট", icon: <TrendingUp className="w-5 h-5 text-gray-700" /> },
     ];
   }, [customers, feedbacks, showrooms, visitorsToday, visitorsYesterday]);
 

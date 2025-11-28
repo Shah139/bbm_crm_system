@@ -40,7 +40,7 @@ export default function CategoryManagementClient() {
           cache: 'no-store'
         }
       );
-      if (!res.ok) throw new Error('Failed to load categories');
+      if (!res.ok) throw new Error('ক্যাটাগরি লোড করতে ব্যর্থ হয়েছে');
       const data = await res.json();
       const cats: Category[] = (data.categories || []).map((c: any) => ({
         id: c.id,
@@ -49,7 +49,7 @@ export default function CategoryManagementClient() {
       }));
       setCategories(cats);
     } catch (e: any) {
-      show(e.message || 'Error loading categories');
+      show(e.message || 'ক্যাটাগরি লোড করতে সমস্যা হয়েছে');
     }
   };
 
@@ -76,12 +76,12 @@ export default function CategoryManagementClient() {
     e.preventDefault();
     const name = formData.name.trim();
     if (!name) {
-      return show('Please enter a category name');
+      return show('অনুগ্রহ করে একটি ক্যাটাগরির নাম লিখুন');
     }
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      if (!token) return show('Not authenticated');
+      if (!token) return show('অনুগ্রহ করে লগইন করুন');
 
       if (editingId) {
         const res = await fetch(`${baseUrl}/api/user/categories/${editingId}`, {
@@ -91,13 +91,13 @@ export default function CategoryManagementClient() {
         });
         if (!res.ok) {
           const txt = await res.text();
-          throw new Error(txt || `Failed to update category (status ${res.status})`);
+          throw new Error(txt || `ক্যাটাগরি আপডেট করতে ব্যর্থ হয়েছে (স্ট্যাটাস ${res.status})`);
         }
         const data = await res.json().catch(() => ({} as any));
         const updated = (data?.category as any) || { id: editingId, name };
 
         setCategories((prev) => prev.map((c) => (c.id === updated.id ? { ...c, name: updated.name, createdAt: (updated as any).createdAt || c.createdAt } : c)));
-        show(`Category "${name}" updated successfully!`);
+        show(`ক্যাটাগরি "${name}" সফলভাবে আপডেট হয়েছে!`);
         setEditingId(null);
       } else {
         const res = await fetch(`${baseUrl}/api/user/create-categories`, {
@@ -107,7 +107,7 @@ export default function CategoryManagementClient() {
         });
         if (!res.ok) {
           const txt = await res.text();
-          throw new Error(txt || `Failed to add category (status ${res.status})`);
+          throw new Error(txt || `ক্যাটাগরি যোগ করতে ব্যর্থ হয়েছে (স্ট্যাটাস ${res.status})`);
         }
         const data = await res.json().catch(() => ({} as any));
         const created = (data?.category as any) || null;
@@ -115,7 +115,7 @@ export default function CategoryManagementClient() {
         if (created) {
           setCategories((prev) => [{ id: created.id, name: created.name, createdAt: created.createdAt }, ...prev]);
         }
-        show(`Category "${name}" added successfully!`);
+        show(`ক্যাটাগরি "${name}" সফলভাবে যোগ হয়েছে!`);
       }
 
       setFormData({ name: '' });
@@ -127,7 +127,7 @@ export default function CategoryManagementClient() {
         const parsed = JSON.parse(err.message);
         if (parsed?.message) return show(parsed.message);
       } catch (_) {}
-      return show(err.message || 'Error saving category');
+      return show(err.message || 'ক্যাটাগরি সংরক্ষণ করতে সমস্যা হয়েছে');
     }
   };
 
@@ -139,21 +139,21 @@ export default function CategoryManagementClient() {
 
   const handleDeleteCategory = async (id: string) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) return show('Not authenticated');
+    if (!token) return show('অনুগ্রহ করে লগইন করুন');
     try {
       const res = await fetch(`${baseUrl}/api/user/categories/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error(`Failed to delete category (status ${res.status})`);
+      if (!res.ok) throw new Error(`ক্যাটাগরি মুছতে ব্যর্থ হয়েছে (স্ট্যাটাস ${res.status})`);
 
       setCategories((prev) => prev.filter((c) => c.id !== id));
       setDeleteConfirmId(null);
-      show('Category deleted successfully!');
+      show('ক্যাটাগরি সফলভাবে মুছে ফেলা হয়েছে!');
 
       fetchCategories();
     } catch (e: any) {
-      show(e.message || 'Error deleting category');
+      show(e.message || 'ক্যাটাগরি মুছতে সমস্যা হয়েছে');
     }
   };
 
@@ -168,22 +168,22 @@ export default function CategoryManagementClient() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Category Management</h1>
-            <p className="text-gray-600">Manage your product categories</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">ক্যাটাগরি ম্যানেজমেন্ট</h1>
+            <p className="text-gray-600">আপনার প্রোডাক্টের ক্যাটাগরি সমূহ ম্যানেজ করুন</p>
           </div>
           <button
             onClick={openAddModal}
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
           >
             <Plus className="w-5 h-5" />
-            Add Category
+            নতুন ক্যাটাগরি যোগ করুন
           </button>
         </div>
 
         <div className="bg-white  rounded-lg shadow p-6 mb-8">
           <input
             type="text"
-            placeholder="Search categories..."
+            placeholder="ক্যাটাগরি খুঁজুন..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 transition"
@@ -193,7 +193,7 @@ export default function CategoryManagementClient() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">
-              Categories ({filteredCategories.length})
+              ক্যাটাগরি ({filteredCategories.length})
             </h2>
           </div>
 
@@ -201,9 +201,9 @@ export default function CategoryManagementClient() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Category Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Created Date</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ক্যাটাগরির নাম</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">তৈরির তারিখ</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody>
@@ -237,19 +237,19 @@ export default function CategoryManagementClient() {
                             </button>
                             {deleteConfirmId === category.id && (
                               <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10 whitespace-nowrap">
-                                <p className="text-sm font-medium text-gray-900 mb-2">Delete this category?</p>
+                                <p className="text-sm font-medium text-gray-900 mb-2">এই ক্যাটাগরিটি মুছবেন?</p>
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => handleDeleteCategory(category.id)}
                                     className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
                                   >
-                                    Delete
+                                    মুছুন
                                   </button>
                                   <button
                                     onClick={() => setDeleteConfirmId(null)}
                                     className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition"
                                   >
-                                    Cancel
+                                    বাতিল
                                   </button>
                                 </div>
                               </div>
@@ -262,7 +262,7 @@ export default function CategoryManagementClient() {
                 ) : (
                   <tr>
                     <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
-                      {searchQuery ? 'No categories found matching your search' : 'No categories yet. Create one to get started!'}
+                      {searchQuery ? 'আপনার অনুসন্ধানের সাথে মিলিয়ে কোন ক্যাটাগরি পাওয়া যায়নি' : 'এখনও কোন ক্যাটাগরি নেই। শুরু করতে একটি ক্যাটাগরি তৈরি করুন!'}
                     </td>
                   </tr>
                 )}
@@ -280,15 +280,15 @@ export default function CategoryManagementClient() {
             </button>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-1">
-              {editingId !== null ? 'Edit Category' : 'Add New Category'}
+              {editingId !== null ? 'ক্যাটাগরি সম্পাদনা' : 'নতুন ক্যাটাগরি যোগ করুন'}
             </h2>
             <p className="text-gray-600 text-sm mb-6">
-              {editingId !== null ? 'Update the category details below' : 'Enter the category name below'}
+              {editingId !== null ? 'নিচে ক্যাটাগরির তথ্য আপডেট করুন' : 'নিচে ক্যাটাগরির নাম লিখুন'}
             </p>
 
             <form onSubmit={handleAddCategory} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">ক্যাটাগরির নাম</label>
                 <input
                   type="text"
                   name="name"

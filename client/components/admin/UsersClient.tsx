@@ -34,7 +34,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
     name: "",
     email: "",
     password: "",
-    role: "Customer",
+    role: "Admin",
     status: "Active",
   });
 
@@ -44,7 +44,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
     type: "success" | "error";
   }>({ show: false, message: "", type: "success" });
 
-  const roles = ["Admin", "Office Admin", "Showroom", "Customer"];
+  const roles = ["Admin", "Office Admin", "Showroom"];
   const statuses = ["Active", "Inactive", "Pending", "Suspend"];
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
@@ -69,7 +69,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
         name: "",
         email: "",
         password: "",
-        role: "Customer",
+        role: "Admin",
         status: "Active",
       });
     }
@@ -83,7 +83,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
       name: "",
       email: "",
       password: "",
-      role: "Customer",
+      role: "Admin",
       status: "Active",
     });
   };
@@ -112,9 +112,9 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const res = await fetch(`${baseUrl}/api/user/admins`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 403) {
-        throw new Error('You need admin role to access this feature');
+        throw new Error('এই ফিচার ব্যবহার করতে অ্যাডমিন ভূমিকা প্রয়োজন');
       } else if (!res.ok) {
-        throw new Error('Failed to load users');
+        throw new Error('ইউজারের তালিকা লোড করতে ব্যর্থ হয়েছে');
       }
       const data = await res.json();
       const users: User[] = (data.users || []).map((u: any) => ({
@@ -127,7 +127,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
       setAllUsers(users);
       setDisplayedUsers(users.slice(0, 10));
     } catch (e: any) {
-      showToast(e.message || 'Error loading users', 'error');
+      showToast(e.message || 'ইউজার লোড করতে সমস্যা হয়েছে', 'error');
     }
   };
 
@@ -140,7 +140,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
     e.preventDefault();
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      if (!token) return showToast('Not authenticated', 'error');
+      if (!token) return showToast('অনুগ্রহ করে লগইন করুন', 'error');
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
       if (editingUser) {
@@ -153,8 +153,8 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Failed to update user');
-        showToast('User updated successfully', 'success');
+        if (!res.ok) throw new Error('ইউজার আপডেট করতে ব্যর্থ হয়েছে');
+        showToast('ইউজার সফলভাবে আপডেট হয়েছে', 'success');
       } else {
         const payload = {
           name: formData.name,
@@ -168,13 +168,13 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Failed to create user');
-        showToast('User created successfully', 'success');
+        if (!res.ok) throw new Error('নতুন ইউজার তৈরি করতে ব্যর্থ হয়েছে');
+        showToast('নতুন ইউজার সফলভাবে তৈরি হয়েছে', 'success');
       }
       handleCloseModal();
       fetchUsers();
     } catch (e: any) {
-      showToast(e.message || 'Error saving user', 'error');
+      showToast(e.message || 'ইউজার সংরক্ষণ করতে সমস্যা হয়েছে', 'error');
     }
   };
 
@@ -193,13 +193,13 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to delete user');
-      showToast('User deleted', 'success');
+      if (!res.ok) throw new Error('ইউজার মুছতে ব্যর্থ হয়েছে');
+      showToast('ইউজার মুছে ফেলা হয়েছে', 'success');
       setAllUsers((prev) => prev.filter((u) => u.id !== deleteConfirmUser.id));
       setDisplayedUsers((prev) => prev.filter((u) => u.id !== deleteConfirmUser.id));
       setDeleteConfirmUser(null);
     } catch (e: any) {
-      showToast(e.message || 'Error deleting user', 'error');
+      showToast(e.message || 'ইউজার মুছতে সমস্যা হয়েছে', 'error');
     }
   };
 
@@ -238,13 +238,13 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
       <div className="max-w-7xl mx-auto">
 
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">ইউজার ম্যানেজমেন্ট</h1>
           <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 md:px-6 md:py-2 rounded-lg transition text-sm sm:text-base"
           >
             <Plus size={18} className="sm:!w-5 sm:!h-5" />
-            Add New User
+            নতুন ইউজার যোগ করুন
           </button>
 
         </div>
@@ -254,11 +254,11 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">নাম</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ইমেইল</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ভূমিকা</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">স্ট্যাটাস</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody>
@@ -306,7 +306,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
                       colSpan={5}
                       className="px-6 py-8 text-center text-gray-500"
                     >
-                      No users found
+                      কোন ইউজার পাওয়া যায়নি
                     </td>
                   </tr>
                 )}
@@ -320,7 +320,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
                 onClick={handleLoadMore}
                 className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition font-medium"
               >
-                Load More Users
+                আরো ইউজার দেখুন
               </button>
             </div>
           )}
@@ -331,7 +331,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
               <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {editingUser ? "Edit User" : "Create New User"}
+                  {editingUser ? "ইউজার সম্পাদনা" : "নতুন ইউজার তৈরি"}
                 </h2>
                 <button
                   onClick={handleCloseModal}
@@ -345,7 +345,7 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Name
+                    নাম
                   </label>
                   <input
                     type="text"
@@ -354,13 +354,13 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    placeholder="Enter name"
+                    placeholder="নাম লিখুন"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    ইমেইল
                   </label>
                   <input
                     type="email"
@@ -369,16 +369,16 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    placeholder="Enter email"
+                    placeholder="ইমেইল লিখুন"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password{" "}
+                    পাসওয়ার্ড{" "}
                     {editingUser && (
                       <span className="text-xs text-gray-500">
-                        (leave blank to keep current)
+                        (আগের পাসওয়ার্ড রাখতে ফাঁকা রাখুন)
                       </span>
                     )}
                   </label>
@@ -389,13 +389,13 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
                     onChange={handleInputChange}
                     required={!editingUser}
                     className="w-full px-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    placeholder="Enter password"
+                    placeholder="পাসওয়ার্ড লিখুন"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role
+                    ভূমিকা
                   </label>
                   <select
                     name="role"
@@ -419,13 +419,13 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
                     onClick={handleCloseModal}
                     className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition font-medium"
                   >
-                    Cancel
+                    বাতিল
                   </button>
                   <button
                     type="submit"
                     className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium"
                   >
-                    {editingUser ? "Update User" : "Create User"}
+                    {editingUser ? "ইউজার আপডেট করুন" : "ইউজার তৈরি করুন"}
                   </button>
                 </div>
               </form>
@@ -438,23 +438,23 @@ export default function UsersClient({ initialUsers = [] }: UsersClientProps) {
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Delete User
+                  ইউজার মুছুন
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteConfirmUser.name}</span>? This action cannot be undone.
+                  আপনি কি নিশ্চিতভাবে <span className="font-semibold text-gray-900">{deleteConfirmUser.name}</span> ইউজারকে মুছতে চান? এই কাজটি আর ফিরিয়ে আনা যাবে না।
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={handleDeleteCancel}
                     className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition font-medium"
                   >
-                    Cancel
+                    বাতিল
                   </button>
                   <button
                     onClick={handleDeleteConfirm}
                     className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium"
                   >
-                    Delete
+                    মুছুন
                   </button>
                 </div>
               </div>
